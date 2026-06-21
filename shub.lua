@@ -1,16 +1,34 @@
-local Luminosity = loadstring(game:HttpGet("https://raw.githubusercontent.com/iHavoc101/Genesis-Studios/main/UserInterface/Luminosity.lua", true))()
-
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInput = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 
-local isMobile = UserInputService.TouchEnabled
+local cloneref = (cloneref or clonereference or function(instance)
+    return instance
+end)
+
+local WindUI
+
+do
+    local ok, result = pcall(function()
+        return require("./src/Init")
+    end)
+
+    if ok then
+        WindUI = result
+    else
+        if cloneref(game:GetService("RunService")):IsStudio() then
+            WindUI = require(cloneref(ReplicatedStorage:WaitForChild("WindUI"):WaitForChild("Init")))
+        else
+            WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+        end
+    end
+end
 
 -- ============ VARIABLES ============
 local FarmEnabled = false
@@ -573,7 +591,7 @@ task.spawn(function()
             HakiQuestEnabled = false
             CollectedRings = {}
             currentRingIndex = 1
-            print("Haki Quest Completed!")
+            WindUI:Notify({ Title = "Haki Quest", Content = "Completed!", Duration = 3 })
             continue
         end
         
@@ -618,7 +636,7 @@ task.spawn(function()
                 
                 task.wait(0.2)
                 CollectedRings[ring.Name] = true
-                print("Collected " .. ring.Name .. " (" .. currentRingIndex .. "/" .. #rings .. ")")
+                WindUI:Notify({ Title = "Ring", Content = "Collected " .. ring.Name .. " (" .. currentRingIndex .. "/" .. #rings .. ")", Duration = 2 })
                 currentRingIndex = currentRingIndex + 1
                 RingTweenActive = false
                 task.wait(0.1)
@@ -698,7 +716,7 @@ local function toggleFly()
             local moveY = 0
             local cam = workspace.CurrentCamera
             
-            if isMobile then
+            if UserInputService.TouchEnabled then
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if hum then
                     local dir = hum.MoveDirection
@@ -825,7 +843,7 @@ end
 
 -- ============ PLAYER FUNCTIONS ============
 local function GetPlayerList()
-    local list = {"None"}
+    local list = {}
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= Player then
             table.insert(list, plr.Name)
@@ -839,18 +857,18 @@ local Spectating = false
 local CurrentSpectatePlayer = nil
 local OriginalCameraSubject = nil
 local OriginalCameraType = nil
-local SelectedPlayerName = "None"
+local SelectedPlayerName = nil
 local KillLoopConnection = nil
 
 local function StartSpectate(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        print("Player not found!")
+        WindUI:Notify({ Title = "Spectator", Content = "Player not found!", Duration = 2 })
         return false
     end
     local hum = target.Character:FindFirstChildOfClass("Humanoid")
     if not hum then
-        print("No humanoid!")
+        WindUI:Notify({ Title = "Spectator", Content = "No humanoid!", Duration = 2 })
         return false
     end
     Spectating = true
@@ -861,7 +879,7 @@ local function StartSpectate(playerName)
         Camera.CameraType = Enum.CameraType.Custom
         Camera.CameraSubject = hum
     end)
-    print("Watching " .. target.Name)
+    WindUI:Notify({ Title = "Spectator", Content = "Watching " .. target.Name, Duration = 2 })
     return true
 end
 
@@ -882,18 +900,18 @@ local function StopSpectate()
             end
         end
     end)
-    print("Stopped spectating")
+    WindUI:Notify({ Title = "Spectator", Content = "Stopped", Duration = 2 })
 end
 
 local function TeleportToPlayer(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        print("Player not found!")
+        WindUI:Notify({ Title = "Teleport", Content = "Player not found!", Duration = 2 })
         return
     end
     local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
     if not targetRoot then
-        print("No root part!")
+        WindUI:Notify({ Title = "Teleport", Content = "No root part!", Duration = 2 })
         return
     end
     local myChar = getCharacter()
@@ -902,23 +920,23 @@ local function TeleportToPlayer(playerName)
         pcall(function()
             myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 1.5, 1.5)
         end)
-        print("Teleported to " .. target.Name)
+        WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. target.Name, Duration = 2 })
     end
 end
 
 local function StartKill(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target then
-        print("Player not found!")
+        WindUI:Notify({ Title = "Kill", Content = "Player not found!", Duration = 2 })
         return false
     end
     if not target.Character then
-        print("Target has no character!")
+        WindUI:Notify({ Title = "Kill", Content = "Target has no character!", Duration = 2 })
         return false
     end
     CurrentKillTarget = target
     KillActive = true
-    print("Targeting " .. target.Name)
+    WindUI:Notify({ Title = "Kill", Content = "Targeting " .. target.Name, Duration = 2 })
     
     if KillLoopConnection then KillLoopConnection:Disconnect() end
     KillLoopConnection = RunService.Heartbeat:Connect(function()
@@ -929,7 +947,7 @@ local function StartKill(playerName)
         
         local target = CurrentKillTarget
         if not target or not target.Character then
-            print("Target lost!")
+            WindUI:Notify({ Title = "Kill", Content = "Target lost!", Duration = 2 })
             KillActive = false
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
@@ -939,7 +957,7 @@ local function StartKill(playerName)
         local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
         
         if not targetHum or not targetRoot or targetHum.Health <= 0 then
-            print("Target eliminated!")
+            WindUI:Notify({ Title = "Kill", Content = "Target eliminated!", Duration = 2 })
             KillActive = false
             CurrentKillTarget = nil
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
@@ -968,99 +986,162 @@ local function StopKill()
         KillLoopConnection:Disconnect()
         KillLoopConnection = nil
     end
-    print("Stopped killing")
+    WindUI:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
 end
 
--- ============ WINDOW SETUP - LUMINOSITY ============
-local Window = Luminosity.new("SON HUB V3.5", "Made by SonDepTrai", 4370345701)
+-- ============ WINDOW SETUP - WINDUI ============
+local Window = WindUI:CreateWindow({
+    Title = "SON HUB V3.5",
+    Folder = "sonhub",
+    Icon = "solar:folder-2-bold-duotone",
+    NewElements = true,
+    HideSearchBar = false,
+    OpenButton = {
+        Title = "Open SON HUB",
+        CornerRadius = UDim.new(1, 0),
+        StrokeThickness = 3,
+        Enabled = true,
+        Draggable = true,
+        OnlyMobile = false,
+        Scale = 0.5,
+        Color = ColorSequence.new(
+            Color3.fromHex("#FF6B6B"),
+            Color3.fromHex("#FFE66D")
+        ),
+    },
+    Topbar = {
+        Height = 44,
+        ButtonsType = "Mac",
+    },
+})
 
--- Tab 1: Farm
-local FarmTab = Window.Tab("Farm", 6026568198)
+Window:Tag({
+    Title = "v3.5",
+    Icon = "github",
+    Color = Color3.fromHex("#1c1c1c"),
+    Border = true,
+})
 
--- Farm Folder
-local FarmFolder = FarmTab.Folder("Auto Farm", "Farm settings and controls")
+-- ============ FARM TAB ============
+local FarmTab = Window:Tab({
+    Title = "Farm",
+    Icon = "solar:leaf-bold",
+})
 
-FarmFolder.Button("Refresh Weapons", "Click to refresh weapon list", function()
-    print("Weapons refreshed")
-end)
+local FarmSection = FarmTab:Section({
+    Title = "Auto Farm",
+})
 
-FarmFolder.Toggle("Auto Farm", function(Status)
-    FarmEnabled = Status
-    if not Status and CurrentTarget then
-        unfreezeNPC(CurrentTarget)
-        CurrentTarget = nil
-    end
-    print("Auto Farm: " .. tostring(Status))
-end)
+FarmSection:Button({
+    Title = "Refresh Weapons",
+    Icon = "",
+    Callback = function()
+        WindUI:Notify({ Title = "Refreshed", Content = "Weapons list refreshed", Duration = 2 })
+    end,
+})
 
-FarmFolder.Toggle("Auto Chest", function(Status)
-    ChestEnabled = Status
-    print("Auto Chest: " .. tostring(Status))
-end)
+FarmSection:Toggle({
+    Title = "Auto Farm",
+    Desc = "Toggle auto farm on/off",
+    Callback = function(v)
+        FarmEnabled = v
+        if not v and CurrentTarget then
+            unfreezeNPC(CurrentTarget)
+            CurrentTarget = nil
+        end
+    end,
+})
 
--- Auto Bring Folder
-local BringFolder = FarmTab.Folder("Auto Bring", "Auto bring items to you")
+FarmSection:Toggle({
+    Title = "Auto Chest",
+    Desc = "Auto open chests",
+    Callback = function(v)
+        ChestEnabled = v
+    end,
+})
 
-BringFolder.Toggle("Auto Bring Normal Fruit", function(Status)
-    AutoBringNormalFruit = Status
-    print("Auto Bring Normal Fruit: " .. tostring(Status))
-end)
+-- Auto Bring
+local BringSection = FarmTab:Section({
+    Title = "Auto Bring",
+})
 
-BringFolder.Toggle("Auto Bring Demon Fruit", function(Status)
-    AutoBringDemonFruit = Status
-    print("Auto Bring Demon Fruit: " .. tostring(Status))
-end)
+BringSection:Toggle({
+    Title = "Auto Bring Normal Fruit",
+    Callback = function(v)
+        AutoBringNormalFruit = v
+    end,
+})
 
-BringFolder.Toggle("Auto Bring Compass", function(Status)
-    AutoBringCompass = Status
-    print("Auto Bring Compass: " .. tostring(Status))
-end)
+BringSection:Toggle({
+    Title = "Auto Bring Demon Fruit",
+    Callback = function(v)
+        AutoBringDemonFruit = v
+    end,
+})
 
-BringFolder.Toggle("Auto Bring Old Book", function(Status)
-    AutoBringOldBook = Status
-    print("Auto Bring Old Book: " .. tostring(Status))
-end)
+BringSection:Toggle({
+    Title = "Auto Bring Compass",
+    Callback = function(v)
+        AutoBringCompass = v
+    end,
+})
 
--- Tab 2: Config Farm
-local ConfigTab = Window.Tab("Config Farm", 6022668945)
+BringSection:Toggle({
+    Title = "Auto Bring Old Book",
+    Callback = function(v)
+        AutoBringOldBook = v
+    end,
+})
 
--- Auto Skill
-local SkillFolder = ConfigTab.Folder("Auto Skill", "Auto skill settings")
+-- ============ CONFIG FARM TAB ============
+local ConfigTab = Window:Tab({
+    Title = "Config Farm",
+    Icon = "solar:cpu-bold",
+})
 
-SkillFolder.Toggle("Auto Skill", function(Status)
-    AutoSkillEnabled = Status
-    print("Auto Skill: " .. tostring(Status))
-end)
+local SkillSection = ConfigTab:Section({
+    Title = "Auto Skill",
+})
+
+SkillSection:Toggle({
+    Title = "Auto Skill",
+    Callback = function(v)
+        AutoSkillEnabled = v
+    end,
+})
 
 for _, skill in ipairs(AvailableSkills) do
-    SkillFolder.Toggle("Skill " .. skill, function(Status)
-        SelectedSkills[skill] = Status
-        local count = 0
-        for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
-        print("Selected " .. count .. " skills")
-    end)
+    SkillSection:Toggle({
+        Title = "Skill " .. skill,
+        Callback = function(v)
+            SelectedSkills[skill] = v
+            local count = 0
+            for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
+            WindUI:Notify({ Title = "Skills", Content = "Selected " .. count .. " skills", Duration = 1 })
+        end,
+    })
 end
 
--- Auto Haki
-local HakiFolder = ConfigTab.Folder("Auto Haki", "Auto Haki settings")
+local HakiSection = ConfigTab:Section({
+    Title = "Auto Haki",
+})
 
-HakiFolder.Toggle("Auto Haki", function(Status)
-    AutoHakiEnabled = Status
-    print("Auto Haki: " .. tostring(Status))
-end)
+HakiSection:Toggle({
+    Title = "Auto Haki",
+    Callback = function(v)
+        AutoHakiEnabled = v
+    end,
+})
 
--- Tab 3: Teleport
-local TeleportTab = Window.Tab("Teleport", 6026568198)
+-- ============ TELEPORT TAB ============
+local TeleportTab = Window:Tab({
+    Title = "Teleport",
+    Icon = "solar:planet-bold",
+})
 
-local TeleportFolder = TeleportTab.Folder("Teleport", "Teleport to locations")
-
-local Islands = {
-    "Sam", "Fisher", "SectorG9", "MarineFord", "Purple Island",
-    "Water tower", "WindMills", "OneHouse", "restaurant", "KingCrab",
-    "CaveIsland", "BigTree", "Krizma Island", "Gun Island", "Accient Island",
-    "C Island", "Bar Island", "Anna House", "Crocodile Land", "Three Tree",
-    "Hole Land", "Many Land", "Haki Land", "Vokun Land", "BigSnow"
-}
+local TeleportSection = TeleportTab:Section({
+    Title = "Teleport",
+})
 
 local IslandPositions = {
     ["Sam"] = Vector3.new(-1282.53, 218.00, -1347.59),
@@ -1090,125 +1171,195 @@ local IslandPositions = {
     ["BigSnow"] = Vector3.new(6275.28, 487.00, -1829.30),
 }
 
-for _, island in ipairs(Islands) do
-    TeleportFolder.Button(island, "Teleport to " .. island, function()
-        local char = getCharacter()
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp and IslandPositions[island] then
-            pcall(function()
-                hrp.CFrame = CFrame.new(IslandPositions[island]) + Vector3.new(0, 3, 0)
-            end)
-            print("Teleported to " .. island)
-        end
-    end)
+for island, pos in pairs(IslandPositions) do
+    TeleportSection:Button({
+        Title = island,
+        Icon = "",
+        Callback = function()
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(pos) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. island, Duration = 2 })
+            end
+        end,
+    })
 end
 
-TeleportFolder.Button("Teleport to Rayleigh", "Teleport to Rayleigh", function()
-    teleportToRayleigh()
-    print("Teleported to Rayleigh")
-end)
+TeleportSection:Button({
+    Title = "Teleport to Rayleigh",
+    Icon = "",
+    Callback = function()
+        teleportToRayleigh()
+        WindUI:Notify({ Title = "Teleport", Content = "Teleported to Rayleigh", Duration = 2 })
+    end,
+})
 
--- Tab 4: Player
-local PlayerTab = Window.Tab("Player", 6026568198)
+-- ============ PLAYER TAB ============
+local PlayerTab = Window:Tab({
+    Title = "Player",
+    Icon = "lucide:users",
+})
 
-local PlayerFolder = PlayerTab.Folder("Player Control", "Player control options")
+local PlayerSection = PlayerTab:Section({
+    Title = "Player Control",
+})
 
--- Player list dropdown - using buttons for simplicity
+-- Player dropdown
 local PlayerList = GetPlayerList()
-for _, name in ipairs(PlayerList) do
-    if name ~= "None" then
-        PlayerFolder.Button("Select " .. name, "Select player: " .. name, function()
-            SelectedPlayerName = name
-            print("Selected player: " .. name)
-        end)
-    end
+if #PlayerList > 0 then
+    local PlayerDropdown = PlayerSection:Dropdown({
+        Title = "Select Player",
+        Values = PlayerList,
+        Value = PlayerList[1],
+        Callback = function(v)
+            SelectedPlayerName = v
+        end,
+    })
 end
 
-PlayerFolder.Button("Spectate Player", "Spectate selected player", function()
-    if SelectedPlayerName and SelectedPlayerName ~= "None" then
-        if Spectating then
+PlayerSection:Button({
+    Title = "Refresh Player List",
+    Icon = "",
+    Callback = function()
+        local newList = GetPlayerList()
+        WindUI:Notify({ Title = "Refresh", Content = "Player list updated", Duration = 2 })
+    end,
+})
+
+PlayerSection:Toggle({
+    Title = "Spectate Player",
+    Callback = function(v)
+        if v then
+            if SelectedPlayerName then
+                StartSpectate(SelectedPlayerName)
+            else
+                WindUI:Notify({ Title = "Spectate", Content = "Select a player first!", Duration = 2 })
+                return false
+            end
+        else
             StopSpectate()
-        else
-            StartSpectate(SelectedPlayerName)
         end
-    else
-        print("Select a player first!")
-    end
-end)
+    end,
+})
 
-PlayerFolder.Button("Teleport to Player", "Teleport to selected player", function()
-    if SelectedPlayerName and SelectedPlayerName ~= "None" then
-        TeleportToPlayer(SelectedPlayerName)
-    else
-        print("Select a player first!")
-    end
-end)
-
-PlayerFolder.Toggle("Kill Player", function(Status)
-    if Status then
-        if SelectedPlayerName and SelectedPlayerName ~= "None" then
-            StartKill(SelectedPlayerName)
+PlayerSection:Button({
+    Title = "Teleport to Player",
+    Icon = "",
+    Callback = function()
+        if SelectedPlayerName then
+            TeleportToPlayer(SelectedPlayerName)
         else
-            print("Select a player first!")
-            return false
+            WindUI:Notify({ Title = "Teleport", Content = "Select a player first!", Duration = 2 })
         end
-    else
-        StopKill()
-    end
-end)
+    end,
+})
+
+PlayerSection:Toggle({
+    Title = "Kill Player",
+    Callback = function(v)
+        if v then
+            if SelectedPlayerName then
+                StartKill(SelectedPlayerName)
+            else
+                WindUI:Notify({ Title = "Kill", Content = "Select a player first!", Duration = 2 })
+                return false
+            end
+        else
+            StopKill()
+        end
+    end,
+})
 
 -- Utility
-local UtilityFolder = PlayerTab.Folder("Utility", "Utility options")
+local UtilitySection = PlayerTab:Section({
+    Title = "Utility",
+})
 
-UtilityFolder.Toggle("Fly", function(Status)
-    toggleFly()
-    print("Fly: " .. tostring(FlyEnabled))
-end)
+UtilitySection:Toggle({
+    Title = "Fly",
+    Callback = function()
+        toggleFly()
+        WindUI:Notify({ Title = "Fly", Content = tostring(FlyEnabled), Duration = 2 })
+    end,
+})
 
-UtilityFolder.Slider("Fly Speed", {Precise = true, Default = 200, Min = 50, Max = 1000}, function(Status)
-    FlySpeed = Status
-    print("Fly Speed: " .. tostring(Status))
-end)
+UtilitySection:Slider({
+    Title = "Fly Speed",
+    Step = 1,
+    Value = {
+        Min = 50,
+        Max = 1000,
+        Default = 200,
+    },
+    Callback = function(v)
+        FlySpeed = v
+    end,
+})
 
-UtilityFolder.Toggle("Noclip", function(Status)
-    toggleNoclip()
-    print("Noclip: " .. tostring(NoclipEnabled))
-end)
+UtilitySection:Toggle({
+    Title = "Noclip",
+    Callback = function()
+        toggleNoclip()
+        WindUI:Notify({ Title = "Noclip", Content = tostring(NoclipEnabled), Duration = 2 })
+    end,
+})
 
-UtilityFolder.Toggle("ESP (Players)", function(Status)
-    toggleESP()
-    print("ESP: " .. tostring(ESPEnabled))
-end)
+UtilitySection:Toggle({
+    Title = "ESP (Players)",
+    Callback = function()
+        toggleESP()
+        WindUI:Notify({ Title = "ESP", Content = tostring(ESPEnabled), Duration = 2 })
+    end,
+})
 
--- Tab 5: Quest
-local QuestTab = Window.Tab("Quest", 6022668945)
+-- ============ QUEST TAB ============
+local QuestTab = Window:Tab({
+    Title = "Quest",
+    Icon = "solar:crown-bold",
+})
 
-local QuestFolder = QuestTab.Folder("Haki Quest", "Haki quest settings")
+local QuestSection = QuestTab:Section({
+    Title = "Haki Quest",
+})
 
-QuestFolder.Toggle("Auto Collect Rings", function(Status)
-    HakiQuestEnabled = Status
-    if not Status then 
+QuestSection:Toggle({
+    Title = "Auto Collect Rings",
+    Callback = function(v)
+        HakiQuestEnabled = v
+        if not v then 
+            CollectedRings = {}
+            currentRingIndex = 1
+            RingTweenActive = false
+        end
+    end,
+})
+
+QuestSection:Button({
+    Title = "Teleport to Rayleigh",
+    Icon = "",
+    Callback = function()
+        teleportToRayleigh()
+    end,
+})
+
+QuestSection:Button({
+    Title = "Reset Progress",
+    Icon = "",
+    Callback = function()
         CollectedRings = {}
         currentRingIndex = 1
         RingTweenActive = false
-    end
-    print("Auto Collect Rings: " .. tostring(Status))
-end)
+        WindUI:Notify({ Title = "Reset", Content = "Progress reset", Duration = 2 })
+    end,
+})
 
-QuestFolder.Button("Teleport to Rayleigh", "Teleport to Rayleigh", function()
-    teleportToRayleigh()
-    print("Teleported to Rayleigh")
-end)
-
-QuestFolder.Button("Reset Progress", "Reset ring collection progress", function()
-    CollectedRings = {}
-    currentRingIndex = 1
-    RingTweenActive = false
-    print("Progress reset")
-end)
-
--- Auto Fishing
-local FishingFolder = QuestTab.Folder("Auto Fishing", "Auto fishing settings")
+-- Fishing
+local FishingSection = QuestTab:Section({
+    Title = "Auto Fishing",
+})
 
 local AutoFishingEnabled = false
 local AutoMinigameEnabled = false
@@ -1380,30 +1531,42 @@ task.spawn(function()
     end
 end)
 
-FishingFolder.Toggle("Auto Fish", function(Status)
-    AutoFishingEnabled = Status
-    if Status then
-        FishingState = "IDLE"
-        EquipRod()
-    end
-    print("Auto Fish: " .. tostring(Status))
-end)
+FishingSection:Toggle({
+    Title = "Auto Fish",
+    Callback = function(v)
+        AutoFishingEnabled = v
+        if v then
+            FishingState = "IDLE"
+            EquipRod()
+        end
+    end,
+})
 
-FishingFolder.Toggle("Auto Minigame (Beta)", function(Status)
-    AutoMinigameEnabled = Status
-    print("Auto Minigame: " .. tostring(Status))
-end)
+FishingSection:Toggle({
+    Title = "Auto Minigame (Beta)",
+    Callback = function(v)
+        AutoMinigameEnabled = v
+    end,
+})
 
--- Tab 6: Misc
-local MiscTab = Window.Tab("Misc", 6026568198)
+-- ============ MISC TAB ============
+local MiscTab = Window:Tab({
+    Title = "Misc",
+    Icon = "solar:settings-bold",
+})
 
-local MiscFolder = MiscTab.Folder("Settings", "Settings and info")
+local MiscSection = MiscTab:Section({
+    Title = "Settings",
+})
 
-MiscFolder.Toggle("Anti AFK", function(Status)
-    AntiAFKEnabled = Status
-    setupAntiAFK()
-    print("Anti AFK: " .. tostring(Status))
-end)
+MiscSection:Toggle({
+    Title = "Anti AFK",
+    Value = true,
+    Callback = function(v)
+        AntiAFKEnabled = v
+        setupAntiAFK()
+    end,
+})
 
 -- ============ TOGGLE BUTTON ============
 local toggleGui = Instance.new("ScreenGui")
@@ -1488,7 +1651,7 @@ local AdminUserIds = { [1425918021] = true, [3160094389] = true }
 local function CheckForAdmins()
     for _, player in ipairs(Players:GetPlayers()) do
         if AdminUserIds[player.UserId] then
-            print("Admin Detected: " .. player.Name .. " joined! Leaving...")
+            WindUI:Notify({ Title = "Admin Detected", Content = player.Name .. " joined! Leaving...", Duration = 3 })
             task.wait(1)
             pcall(function()
                 game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1502,7 +1665,7 @@ CheckForAdmins()
 Players.PlayerAdded:Connect(function(player)
     task.wait(0.5)
     if AdminUserIds[player.UserId] then
-        print("Admin Joined: " .. player.Name .. " joined! Leaving...")
+        WindUI:Notify({ Title = "Admin Joined", Content = player.Name .. " joined! Leaving...", Duration = 3 })
         task.wait(1)
         pcall(function()
             game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1516,12 +1679,12 @@ task.spawn(function()
 end)
 
 -- ============ KEYBIND ============
-game:GetService("UserInputService").InputBegan:Connect(function(Input)
+UserInputService.InputBegan:Connect(function(Input)
     if Input.KeyCode == Enum.KeyCode.RightControl then
         Window:Toggle()
     end
 end)
 
-print("SON HUB V3.5 Loaded Successfully!")
+WindUI:Notify({ Title = "SON HUB V3.5", Content = "Loaded Successfully!", Duration = 3 })
 task.wait(0.1)
 Window:Show()
