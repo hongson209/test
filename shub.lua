@@ -763,7 +763,7 @@ local function toggleFly()
             end)
         end
     end
-end
+end)
 
 -- ============ NOCLIP ============
 local function toggleNoclip()
@@ -1027,7 +1027,9 @@ local FarmTab = Window:Tab({
     Icon = "solar:leaf-bold",
 })
 
--- Weapons Dropdown
+-- Weapons Dropdown - Lưu biến toàn cục để refresh
+local WeaponDropdown = nil
+
 local function getAvailableWeapons()
     local weapons = {"None"}
     local backpack = Player:FindFirstChild("Backpack")
@@ -1053,12 +1055,15 @@ FarmSection:Button({
         WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
         if WeaponDropdown then
             WeaponDropdown:Refresh(weapons)
+            if #weapons > 0 then
+                WeaponDropdown:Select(weapons[1])
+            end
         end
     end,
 })
 
--- Weapon Dropdown (Select)
-local WeaponDropdown = FarmSection:Dropdown({
+-- Weapon Dropdown (Select) - Lưu vào biến để refresh
+WeaponDropdown = FarmSection:Dropdown({
     Title = "Select Weapon",
     Values = getAvailableWeapons(),
     Value = "None",
