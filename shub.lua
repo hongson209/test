@@ -1011,10 +1011,10 @@ local Window = Fluent:CreateWindow({
     TabWidth = tabWidth,
     Size = windowSize,
     Acrylic = false,
-    Theme = "Blood Red",
+    Theme = "Ash Gray",  -- Dùng theme ổn định
     MinimizeKey = Enum.KeyCode.RightControl,
     Search = true,
-    UserInfo = true,  -- QUAN TRỌNG: bật UserInfo
+    UserInfo = true,
     UserInfoTop = true,
     UserInfoTitle = Player.DisplayName or "User",
     UserInfoSubtitle = "@" .. Player.Name,
@@ -1030,7 +1030,6 @@ local QuestTab = Window:AddTab({ Title = "Quest", Icon = "solar/crown-bold" })
 local MiscTab = Window:AddTab({ Title = "Misc", Icon = "solar/settings-bold" })
 
 -- ============ CÁC PHẦN CÒN LẠI GIỮ NGUYÊN ============
--- (Giữ nguyên tất cả các phần từ Farm Section đến hết, chỉ sửa phần Window)
 
 local function getAvailableWeapons()
     local weapons = {"None"}
