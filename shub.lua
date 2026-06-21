@@ -1,34 +1,40 @@
-local RunService = game:GetService("RunService")
+-- ============ LOAD WINDUI ============
+local WindUI = nil
+local loadSuccess = false
+
+-- Thử load WindUI từ nhiều nguồn
+local sources = {
+    "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua",
+    "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua?nocache=" .. tick(),
+}
+
+for _, src in ipairs(sources) do
+    if not loadSuccess then
+        local success, result = pcall(function()
+            return loadstring(game:HttpGet(src))()
+        end)
+        if success and result then
+            WindUI = result
+            loadSuccess = true
+        end
+    end
+end
+
+if not loadSuccess then
+    error("Failed to load WindUI")
+    return
+end
+
+-- ============ SERVICES ============
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInput = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
-
-local cloneref = (cloneref or clonereference or function(instance)
-    return instance
-end)
-
-local WindUI
-
-do
-    local ok, result = pcall(function()
-        return require("./src/Init")
-    end)
-
-    if ok then
-        WindUI = result
-    else
-        if cloneref(game:GetService("RunService")):IsStudio() then
-            WindUI = require(cloneref(ReplicatedStorage:WaitForChild("WindUI"):WaitForChild("Init")))
-        else
-            WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
-        end
-    end
-end
 
 -- ============ VARIABLES ============
 local FarmEnabled = false
@@ -862,12 +868,12 @@ local KillLoopConnection = nil
 local function StartSpectate(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        WindUI:Notify({ Title = "Spectator", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return false
     end
     local hum = target.Character:FindFirstChildOfClass("Humanoid")
     if not hum then
-        WindUI:Notify({ Title = "Spectator", Content = "No humanoid!", Duration = 2 })
+        print("No humanoid!")
         return false
     end
     Spectating = true
@@ -878,7 +884,7 @@ local function StartSpectate(playerName)
         Camera.CameraType = Enum.CameraType.Custom
         Camera.CameraSubject = hum
     end)
-    WindUI:Notify({ Title = "Spectator", Content = "Watching " .. target.Name, Duration = 2 })
+    print("Watching " .. target.Name)
     return true
 end
 
@@ -899,18 +905,18 @@ local function StopSpectate()
             end
         end
     end)
-    WindUI:Notify({ Title = "Spectator", Content = "Stopped", Duration = 2 })
+    print("Stopped spectating")
 end
 
 local function TeleportToPlayer(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        WindUI:Notify({ Title = "Teleport", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return
     end
     local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
     if not targetRoot then
-        WindUI:Notify({ Title = "Teleport", Content = "No root part!", Duration = 2 })
+        print("No root part!")
         return
     end
     local myChar = getCharacter()
@@ -919,23 +925,23 @@ local function TeleportToPlayer(playerName)
         pcall(function()
             myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 1.5, 1.5)
         end)
-        WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. target.Name, Duration = 2 })
+        print("Teleported to " .. target.Name)
     end
 end
 
 local function StartKill(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target then
-        WindUI:Notify({ Title = "Kill", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return false
     end
     if not target.Character then
-        WindUI:Notify({ Title = "Kill", Content = "Target has no character!", Duration = 2 })
+        print("Target has no character!")
         return false
     end
     CurrentKillTarget = target
     KillActive = true
-    WindUI:Notify({ Title = "Kill", Content = "Targeting " .. target.Name, Duration = 2 })
+    print("Targeting " .. target.Name)
     
     if KillLoopConnection then KillLoopConnection:Disconnect() end
     KillLoopConnection = RunService.Heartbeat:Connect(function()
@@ -946,7 +952,7 @@ local function StartKill(playerName)
         
         local target = CurrentKillTarget
         if not target or not target.Character then
-            WindUI:Notify({ Title = "Kill", Content = "Target lost!", Duration = 2 })
+            print("Target lost!")
             KillActive = false
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
@@ -956,7 +962,7 @@ local function StartKill(playerName)
         local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
         
         if not targetHum or not targetRoot or targetHum.Health <= 0 then
-            WindUI:Notify({ Title = "Kill", Content = "Target eliminated!", Duration = 2 })
+            print("Target eliminated!")
             KillActive = false
             CurrentKillTarget = nil
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
@@ -985,7 +991,7 @@ local function StopKill()
         KillLoopConnection:Disconnect()
         KillLoopConnection = nil
     end
-    WindUI:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
+    print("Stopped killing")
 end
 
 -- ============ WINDOW SETUP - WINDUI ============
@@ -1027,7 +1033,7 @@ local FarmTab = Window:Tab({
     Icon = "solar:leaf-bold",
 })
 
--- Weapons Dropdown - Lưu biến toàn cục để refresh
+-- Weapons Dropdown
 local WeaponDropdown = nil
 
 local function getAvailableWeapons()
@@ -1052,17 +1058,16 @@ FarmSection:Button({
     Icon = "",
     Callback = function()
         local weapons = getAvailableWeapons()
-        WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
         if WeaponDropdown then
             WeaponDropdown:Refresh(weapons)
             if #weapons > 0 then
                 WeaponDropdown:Select(weapons[1])
             end
         end
+        WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
     end,
 })
 
--- Weapon Dropdown (Select) - Lưu vào biến để refresh
 WeaponDropdown = FarmSection:Dropdown({
     Title = "Select Weapon",
     Values = getAvailableWeapons(),
@@ -1079,7 +1084,6 @@ WeaponDropdown = FarmSection:Dropdown({
     end,
 })
 
--- Farm Mode Dropdown
 FarmSection:Dropdown({
     Title = "Farm Mode",
     Values = {"Easy", "Medium", "Hardcore"},
@@ -1116,7 +1120,6 @@ FarmSection:Toggle({
 
 FarmSection:Space()
 
--- Auto Bring
 local BringSection = FarmTab:Section({
     Title = "Auto Bring",
 })
@@ -1171,9 +1174,6 @@ for _, skill in ipairs(AvailableSkills) do
         Title = "Skill " .. skill,
         Callback = function(v)
             SelectedSkills[skill] = v
-            local count = 0
-            for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
-            WindUI:Notify({ Title = "Skills", Content = "Selected " .. count .. " skills", Duration = 1 })
         end,
     })
 end
@@ -1201,7 +1201,6 @@ local TeleportSection = TeleportTab:Section({
     Title = "Teleport",
 })
 
--- Islands Dropdown
 local IslandNames = {}
 local IslandPositions = {}
 
@@ -1257,84 +1256,6 @@ TeleportSection:Dropdown({
     end,
 })
 
--- Shop Dropdown
-local ShopNames = {"Sniper Shop", "Sword Shop", "Strange Dealer"}
-local ShopPositions = {
-    ["Sniper Shop"] = Vector3.new(-1843.3797607421875, 221.99998474121094, 3409.400634765625),
-    ["Sword Shop"] = Vector3.new(1005.53515625, 223.99998474121094, -3337.915283203125),
-    ["Strange Dealer"] = Vector3.new(1240.8421630859375, 224.20001220703125, -3240.296875),
-}
-
-TeleportSection:Dropdown({
-    Title = "Shop Teleport",
-    Values = ShopNames,
-    Value = ShopNames[1],
-    Callback = function(v)
-        if ShopPositions[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(ShopPositions[v]) + Vector3.new(0, 3, 0)
-                end)
-                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end,
-})
-
--- Quest NPC Dropdown
-local QuestNames = {"Daily Quest", "Sam Quest", "Krizma Sword", "Mode Position"}
-local QuestPositions = {
-    ["Daily Quest"] = Vector3.new(-2606.061279296875, 253.69842529296875, 1087.8436279296875),
-    ["Sam Quest"] = Vector3.new(-1303.5345458984375, 217.99998474121094, -1352.5908203125),
-    ["Krizma Sword"] = Vector3.new(-1074.173828125, 360.999694824219, 1666.887084969375),
-    ["Mode Position"] = Vector3.new(2053.41552734375, 497.69830322265625, -614.63305640625),
-}
-
-TeleportSection:Dropdown({
-    Title = "Quest NPC Teleport",
-    Values = QuestNames,
-    Value = QuestNames[1],
-    Callback = function(v)
-        if QuestPositions[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(QuestPositions[v]) + Vector3.new(0, 3, 0)
-                end)
-                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end,
-})
-
--- Misc NPC Dropdown
-local MiscNames = {"Stats Fruit Roll", "Roll Stats Fruit"}
-local MiscPositions = {
-    ["Stats Fruit Roll"] = Vector3.new(801.1287231445312, 230.37062072753906, 5354.083984375),
-    ["Roll Stats Fruit"] = Vector3.new(801.3805541992188, 230.37062072753906, 5353.8662109375),
-}
-
-TeleportSection:Dropdown({
-    Title = "Misc NPC Teleport",
-    Values = MiscNames,
-    Value = MiscNames[1],
-    Callback = function(v)
-        if MiscPositions[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(MiscPositions[v]) + Vector3.new(0, 3, 0)
-                end)
-                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end,
-})
-
 TeleportSection:Button({
     Title = "Teleport to Rayleigh",
     Icon = "",
@@ -1354,7 +1275,6 @@ local PlayerSection = PlayerTab:Section({
     Title = "Player Control",
 })
 
--- Player Dropdown
 local PlayerDropdown = PlayerSection:Dropdown({
     Title = "Select Player",
     Values = GetPlayerList(),
@@ -1381,7 +1301,6 @@ PlayerSection:Toggle({
             if SelectedPlayerName then
                 StartSpectate(SelectedPlayerName)
             else
-                WindUI:Notify({ Title = "Spectate", Content = "Select a player first!", Duration = 2 })
                 return false
             end
         else
@@ -1396,8 +1315,6 @@ PlayerSection:Button({
     Callback = function()
         if SelectedPlayerName then
             TeleportToPlayer(SelectedPlayerName)
-        else
-            WindUI:Notify({ Title = "Teleport", Content = "Select a player first!", Duration = 2 })
         end
     end,
 })
@@ -1409,7 +1326,6 @@ PlayerSection:Toggle({
             if SelectedPlayerName then
                 StartKill(SelectedPlayerName)
             else
-                WindUI:Notify({ Title = "Kill", Content = "Select a player first!", Duration = 2 })
                 return false
             end
         else
@@ -1428,7 +1344,6 @@ UtilitySection:Toggle({
     Title = "Fly",
     Callback = function()
         toggleFly()
-        WindUI:Notify({ Title = "Fly", Content = tostring(FlyEnabled), Duration = 2 })
     end,
 })
 
@@ -1449,7 +1364,6 @@ UtilitySection:Toggle({
     Title = "Noclip",
     Callback = function()
         toggleNoclip()
-        WindUI:Notify({ Title = "Noclip", Content = tostring(NoclipEnabled), Duration = 2 })
     end,
 })
 
@@ -1457,7 +1371,6 @@ UtilitySection:Toggle({
     Title = "ESP (Players)",
     Callback = function()
         toggleESP()
-        WindUI:Notify({ Title = "ESP", Content = tostring(ESPEnabled), Duration = 2 })
     end,
 })
 
@@ -1504,7 +1417,6 @@ QuestSection:Button({
 
 QuestSection:Space()
 
--- Fishing Section
 local FishingSection = QuestTab:Section({
     Title = "Auto Fishing",
 })
@@ -1718,29 +1630,6 @@ MiscSection:Toggle({
 
 MiscSection:Space()
 
--- Themes Section
-local ThemeSection = MiscTab:Section({
-    Title = "Themes",
-})
-
-local themes = {
-    "AMOLED", "Ash Gray", "Blood Red", "Cyanic", "Amber Glow", "Deep Violet",
-    "Neon Cyber", "Neon Purple", "Royal Blue", "Deep Ocean", "RGB", "Orange",
-    "Charcoal", "Pearl White", "Midnight", "Galaxy Purple", "Cosmic Violet", "Cotton Candy"
-}
-
--- Theme Dropdown (Select)
-ThemeSection:Dropdown({
-    Title = "Select Theme",
-    Values = themes,
-    Value = "Blood Red",
-    Callback = function(v)
-        WindUI:Notify({ Title = "Theme", Content = v .. " applied", Duration = 2 })
-    end,
-})
-
-MiscSection:Space()
-
 local InfoSection = MiscTab:Section({
     Title = "Info",
 })
@@ -1764,7 +1653,7 @@ local AdminUserIds = { [1425918021] = true, [3160094389] = true }
 local function CheckForAdmins()
     for _, player in ipairs(Players:GetPlayers()) do
         if AdminUserIds[player.UserId] then
-            WindUI:Notify({ Title = "Admin Detected", Content = player.Name .. " joined! Leaving...", Duration = 3 })
+            print("Admin Detected: " .. player.Name)
             task.wait(1)
             pcall(function()
                 game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1775,16 +1664,18 @@ local function CheckForAdmins()
     return false
 end
 CheckForAdmins()
+
 Players.PlayerAdded:Connect(function(player)
     task.wait(0.5)
     if AdminUserIds[player.UserId] then
-        WindUI:Notify({ Title = "Admin Joined", Content = player.Name .. " joined! Leaving...", Duration = 3 })
+        print("Admin Joined: " .. player.Name)
         task.wait(1)
         pcall(function()
             game:GetService("TeleportService"):Teleport(game.PlaceId)
         end)
     end
 end)
+
 task.spawn(function()
     while task.wait(30) do
         CheckForAdmins()
@@ -1803,6 +1694,7 @@ local function HideNametag()
     end)
 end
 HideNametag()
+
 Player.PlayerGui.DescendantAdded:Connect(function(desc)
     task.wait(0.1)
     if desc.Name == "Nametag" and desc:IsA("TextLabel") then
