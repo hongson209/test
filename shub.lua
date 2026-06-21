@@ -53,7 +53,6 @@ local ESPEnabled = false
 local ESPFolder = nil
 local ESPConnection = nil
 local AutoHakiEnabled = false
-local menuVisible = true
 
 local AutoSkillEnabled = false
 local SelectedSkills = {}
@@ -1028,6 +1027,20 @@ local FarmTab = Window:Tab({
     Icon = "solar:leaf-bold",
 })
 
+-- Weapons Dropdown
+local function getAvailableWeapons()
+    local weapons = {"None"}
+    local backpack = Player:FindFirstChild("Backpack")
+    if backpack then
+        for _, v in pairs(backpack:GetChildren()) do
+            if v:IsA("Tool") then
+                table.insert(weapons, v.Name)
+            end
+        end
+    end
+    return weapons
+end
+
 local FarmSection = FarmTab:Section({
     Title = "Auto Farm",
 })
@@ -1036,7 +1049,43 @@ FarmSection:Button({
     Title = "Refresh Weapons",
     Icon = "",
     Callback = function()
-        WindUI:Notify({ Title = "Refreshed", Content = "Weapons list refreshed", Duration = 2 })
+        local weapons = getAvailableWeapons()
+        WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
+        if WeaponDropdown then
+            WeaponDropdown:Refresh(weapons)
+        end
+    end,
+})
+
+-- Weapon Dropdown (Select)
+local WeaponDropdown = FarmSection:Dropdown({
+    Title = "Select Weapon",
+    Values = getAvailableWeapons(),
+    Value = "None",
+    Callback = function(v)
+        if v == "None" then
+            SelectedWeapon = nil
+            ForceEquip = false
+        else
+            SelectedWeapon = v
+            ForceEquip = true
+            equipWeapon(v)
+        end
+    end,
+})
+
+-- Farm Mode Dropdown
+FarmSection:Dropdown({
+    Title = "Farm Mode",
+    Values = {"Easy", "Medium", "Hardcore"},
+    Value = "Easy",
+    Callback = function(v)
+        FarmMode = v
+        if CurrentTarget then
+            unfreezeNPC(CurrentTarget)
+            CurrentTarget = nil
+        end
+        WindUI:Notify({ Title = "Farm Mode", Content = "Switched to " .. v, Duration = 2 })
     end,
 })
 
@@ -1059,6 +1108,8 @@ FarmSection:Toggle({
         ChestEnabled = v
     end,
 })
+
+FarmSection:Space()
 
 -- Auto Bring
 local BringSection = FarmTab:Section({
@@ -1122,6 +1173,8 @@ for _, skill in ipairs(AvailableSkills) do
     })
 end
 
+ConfigTab:Space()
+
 local HakiSection = ConfigTab:Section({
     Title = "Auto Haki",
 })
@@ -1143,7 +1196,11 @@ local TeleportSection = TeleportTab:Section({
     Title = "Teleport",
 })
 
-local IslandPositions = {
+-- Islands Dropdown
+local IslandNames = {}
+local IslandPositions = {}
+
+local islandData = {
     ["Sam"] = Vector3.new(-1282.53, 218.00, -1347.59),
     ["Fisher"] = Vector3.new(-1689.73, 216.00, -320.37),
     ["SectorG9"] = Vector3.new(-2681.07, 216.00, -943.29),
@@ -1171,22 +1228,107 @@ local IslandPositions = {
     ["BigSnow"] = Vector3.new(6275.28, 487.00, -1829.30),
 }
 
-for island, pos in pairs(IslandPositions) do
-    TeleportSection:Button({
-        Title = island,
-        Icon = "",
-        Callback = function()
+for name, pos in pairs(islandData) do
+    table.insert(IslandNames, name)
+    IslandPositions[name] = pos
+end
+table.sort(IslandNames)
+
+TeleportSection:Dropdown({
+    Title = "Select Island",
+    Values = IslandNames,
+    Value = IslandNames[1],
+    Callback = function(v)
+        if IslandPositions[v] then
             local char = getCharacter()
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             if hrp then
                 pcall(function()
-                    hrp.CFrame = CFrame.new(pos) + Vector3.new(0, 3, 0)
+                    hrp.CFrame = CFrame.new(IslandPositions[v]) + Vector3.new(0, 3, 0)
                 end)
-                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. island, Duration = 2 })
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
             end
-        end,
-    })
-end
+        end
+    end,
+})
+
+-- Shop Dropdown
+local ShopNames = {"Sniper Shop", "Sword Shop", "Strange Dealer"}
+local ShopPositions = {
+    ["Sniper Shop"] = Vector3.new(-1843.3797607421875, 221.99998474121094, 3409.400634765625),
+    ["Sword Shop"] = Vector3.new(1005.53515625, 223.99998474121094, -3337.915283203125),
+    ["Strange Dealer"] = Vector3.new(1240.8421630859375, 224.20001220703125, -3240.296875),
+}
+
+TeleportSection:Dropdown({
+    Title = "Shop Teleport",
+    Values = ShopNames,
+    Value = ShopNames[1],
+    Callback = function(v)
+        if ShopPositions[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(ShopPositions[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end,
+})
+
+-- Quest NPC Dropdown
+local QuestNames = {"Daily Quest", "Sam Quest", "Krizma Sword", "Mode Position"}
+local QuestPositions = {
+    ["Daily Quest"] = Vector3.new(-2606.061279296875, 253.69842529296875, 1087.8436279296875),
+    ["Sam Quest"] = Vector3.new(-1303.5345458984375, 217.99998474121094, -1352.5908203125),
+    ["Krizma Sword"] = Vector3.new(-1074.173828125, 360.999694824219, 1666.887084969375),
+    ["Mode Position"] = Vector3.new(2053.41552734375, 497.69830322265625, -614.63305640625),
+}
+
+TeleportSection:Dropdown({
+    Title = "Quest NPC Teleport",
+    Values = QuestNames,
+    Value = QuestNames[1],
+    Callback = function(v)
+        if QuestPositions[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(QuestPositions[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end,
+})
+
+-- Misc NPC Dropdown
+local MiscNames = {"Stats Fruit Roll", "Roll Stats Fruit"}
+local MiscPositions = {
+    ["Stats Fruit Roll"] = Vector3.new(801.1287231445312, 230.37062072753906, 5354.083984375),
+    ["Roll Stats Fruit"] = Vector3.new(801.3805541992188, 230.37062072753906, 5353.8662109375),
+}
+
+TeleportSection:Dropdown({
+    Title = "Misc NPC Teleport",
+    Values = MiscNames,
+    Value = MiscNames[1],
+    Callback = function(v)
+        if MiscPositions[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(MiscPositions[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end,
+})
 
 TeleportSection:Button({
     Title = "Teleport to Rayleigh",
@@ -1207,24 +1349,22 @@ local PlayerSection = PlayerTab:Section({
     Title = "Player Control",
 })
 
--- Player dropdown
-local PlayerList = GetPlayerList()
-if #PlayerList > 0 then
-    local PlayerDropdown = PlayerSection:Dropdown({
-        Title = "Select Player",
-        Values = PlayerList,
-        Value = PlayerList[1],
-        Callback = function(v)
-            SelectedPlayerName = v
-        end,
-    })
-end
+-- Player Dropdown
+local PlayerDropdown = PlayerSection:Dropdown({
+    Title = "Select Player",
+    Values = GetPlayerList(),
+    Value = GetPlayerList()[1] or "None",
+    Callback = function(v)
+        SelectedPlayerName = v
+    end,
+})
 
 PlayerSection:Button({
-    Title = "Refresh Player List",
+    Title = "Refresh List",
     Icon = "",
     Callback = function()
         local newList = GetPlayerList()
+        PlayerDropdown:Refresh(newList)
         WindUI:Notify({ Title = "Refresh", Content = "Player list updated", Duration = 2 })
     end,
 })
@@ -1273,7 +1413,8 @@ PlayerSection:Toggle({
     end,
 })
 
--- Utility
+PlayerSection:Space()
+
 local UtilitySection = PlayerTab:Section({
     Title = "Utility",
 })
@@ -1356,7 +1497,9 @@ QuestSection:Button({
     end,
 })
 
--- Fishing
+QuestSection:Space()
+
+-- Fishing Section
 local FishingSection = QuestTab:Section({
     Title = "Auto Fishing",
 })
@@ -1568,83 +1711,48 @@ MiscSection:Toggle({
     end,
 })
 
--- ============ TOGGLE BUTTON ============
-local toggleGui = Instance.new("ScreenGui")
-toggleGui.Name = "SON_Toggle"
-toggleGui.Parent = Player:WaitForChild("PlayerGui")
-toggleGui.ResetOnSpawn = false
+MiscSection:Space()
 
-local toggleBtn = Instance.new("ImageButton")
-toggleBtn.Size = UDim2.new(0, 55, 0, 55)
-toggleBtn.Position = UDim2.new(0, 15, 0, 90)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-toggleBtn.BackgroundTransparency = 0.3
-toggleBtn.Image = "rbxassetid://86946036155828"
-toggleBtn.ScaleType = Enum.ScaleType.Fit
-toggleBtn.Parent = toggleGui
-toggleBtn.AutoButtonColor = true
+-- Themes Section
+local ThemeSection = MiscTab:Section({
+    Title = "Themes",
+})
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 12)
-btnCorner.Parent = toggleBtn
+local themes = {
+    "AMOLED", "Ash Gray", "Blood Red", "Cyanic", "Amber Glow", "Deep Violet",
+    "Neon Cyber", "Neon Purple", "Royal Blue", "Deep Ocean", "RGB", "Orange",
+    "Charcoal", "Pearl White", "Midnight", "Galaxy Purple", "Cosmic Violet", "Cotton Candy"
+}
 
-local dragging = false
-local moved = false
-local dragStart = nil
-local btnStart = nil
-local dragThreshold = 15
+-- Theme Dropdown (Select)
+ThemeSection:Dropdown({
+    Title = "Select Theme",
+    Values = themes,
+    Value = "Blood Red",
+    Callback = function(v)
+        WindUI:Notify({ Title = "Theme", Content = v .. " applied", Duration = 2 })
+    end,
+})
 
-toggleBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        moved = false
-        dragStart = Vector2.new(input.Position.X, input.Position.Y)
-        btnStart = toggleBtn.Position
-    end
-end)
+MiscSection:Space()
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local currentPos = Vector2.new(input.Position.X, input.Position.Y)
-        local delta = currentPos - dragStart
-        if delta.Magnitude > dragThreshold then
-            moved = true
-            toggleBtn.Position = UDim2.new(btnStart.X.Scale, btnStart.X.Offset + delta.X, btnStart.Y.Scale, btnStart.Y.Offset + delta.Y)
-        end
-    end
-end)
+local InfoSection = MiscTab:Section({
+    Title = "Info",
+})
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        if dragging and not moved then
-            menuVisible = not menuVisible
-            if menuVisible then Window:Show() else Window:Hide() end
-        end
-        dragging = false
-        moved = false
-    end
-end)
+InfoSection:Paragraph({
+    Title = "SON HUB V3.5",
+    Desc = "Created by SonDepTrai\nVersion 3.5\nDiscord: https://discord.gg/faZagWVm72",
+})
 
--- ============ HIDE NAMETAG ============
-local function HideNametag()
-    pcall(function()
-        for _, obj in ipairs(Player.PlayerGui:GetDescendants()) do
-            if obj.Name == "Nametag" and obj:IsA("TextLabel") then
-                obj.Text = "SonHub Hidden"
-                obj.TextColor3 = Color3.fromRGB(255, 255, 255)
-            end
-        end
-    end)
-end
-HideNametag()
-Player.PlayerGui.DescendantAdded:Connect(function(desc)
-    task.wait(0.1)
-    if desc.Name == "Nametag" and desc:IsA("TextLabel") then
-        pcall(function()
-            desc.Text = "SonHub Hidden"
-        end)
-    end
-end)
+InfoSection:Button({
+    Title = "Copy Discord Link",
+    Icon = "",
+    Callback = function()
+        setclipboard("https://discord.gg/faZagWVm72")
+        WindUI:Notify({ Title = "Copied!", Content = "Discord link copied", Duration = 2 })
+    end,
+})
 
 -- ============ ADMIN CHECK ============
 local AdminUserIds = { [1425918021] = true, [3160094389] = true }
@@ -1675,6 +1783,27 @@ end)
 task.spawn(function()
     while task.wait(30) do
         CheckForAdmins()
+    end
+end)
+
+-- ============ HIDE NAMETAG ============
+local function HideNametag()
+    pcall(function()
+        for _, obj in ipairs(Player.PlayerGui:GetDescendants()) do
+            if obj.Name == "Nametag" and obj:IsA("TextLabel") then
+                obj.Text = "SonHub Hidden"
+                obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        end
+    end)
+end
+HideNametag()
+Player.PlayerGui.DescendantAdded:Connect(function(desc)
+    task.wait(0.1)
+    if desc.Name == "Nametag" and desc:IsA("TextLabel") then
+        pcall(function()
+            desc.Text = "SonHub Hidden"
+        end)
     end
 end)
 
