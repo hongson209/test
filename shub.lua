@@ -1,4 +1,4 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/StyearX/Fluent-Modded/releases/download/Fluent/FluentPro"))()
+local Luminosity = loadstring(game:HttpGet("https://raw.githubusercontent.com/iHavoc101/Genesis-Studios/main/UserInterface/Luminosity.lua", true))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -11,8 +11,6 @@ local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 
 local isMobile = UserInputService.TouchEnabled
-local screenSize = workspace.CurrentCamera.ViewportSize
-local isSmallScreen = screenSize.X < 800 or screenSize.Y < 600 or isMobile
 
 -- ============ VARIABLES ============
 local FarmEnabled = false
@@ -36,8 +34,8 @@ local NoclipConnection = nil
 local ESPEnabled = false
 local ESPFolder = nil
 local ESPConnection = nil
-local menuVisible = true
 local AutoHakiEnabled = false
+local menuVisible = true
 
 local AutoSkillEnabled = false
 local SelectedSkills = {}
@@ -575,7 +573,7 @@ task.spawn(function()
             HakiQuestEnabled = false
             CollectedRings = {}
             currentRingIndex = 1
-            Fluent:Notify({ Title = "Haki Quest", Content = "Completed!", Duration = 3 })
+            print("Haki Quest Completed!")
             continue
         end
         
@@ -620,7 +618,7 @@ task.spawn(function()
                 
                 task.wait(0.2)
                 CollectedRings[ring.Name] = true
-                Fluent:Notify({ Title = "Ring", Content = "Collected " .. ring.Name .. " (" .. currentRingIndex .. "/" .. #rings .. ")", Duration = 2 })
+                print("Collected " .. ring.Name .. " (" .. currentRingIndex .. "/" .. #rings .. ")")
                 currentRingIndex = currentRingIndex + 1
                 RingTweenActive = false
                 task.wait(0.1)
@@ -836,39 +834,23 @@ local function GetPlayerList()
     return list
 end
 
-local function UpdatePlayerDropdown()
-    local newList = GetPlayerList()
-    pcall(function()
-        if MainPlayerDropdown then
-            MainPlayerDropdown:SetValues(newList)
-            if not table.find(newList, SelectedPlayerName) then
-                SelectedPlayerName = "None"
-                MainPlayerDropdown:SetValue("None")
-            end
-        end
-    end)
-end
-
 local Camera = workspace.CurrentCamera
 local Spectating = false
 local CurrentSpectatePlayer = nil
 local OriginalCameraSubject = nil
 local OriginalCameraType = nil
 local SelectedPlayerName = "None"
-local KillToggleObj = nil
-local SpectateToggleObj = nil
-local MainPlayerDropdown = nil
 local KillLoopConnection = nil
 
 local function StartSpectate(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        Fluent:Notify({ Title = "Spectator", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return false
     end
     local hum = target.Character:FindFirstChildOfClass("Humanoid")
     if not hum then
-        Fluent:Notify({ Title = "Spectator", Content = "No humanoid!", Duration = 2 })
+        print("No humanoid!")
         return false
     end
     Spectating = true
@@ -879,7 +861,7 @@ local function StartSpectate(playerName)
         Camera.CameraType = Enum.CameraType.Custom
         Camera.CameraSubject = hum
     end)
-    Fluent:Notify({ Title = "Spectator", Content = "Watching " .. target.Name, Duration = 2 })
+    print("Watching " .. target.Name)
     return true
 end
 
@@ -900,18 +882,18 @@ local function StopSpectate()
             end
         end
     end)
-    Fluent:Notify({ Title = "Spectator", Content = "Stopped", Duration = 2 })
+    print("Stopped spectating")
 end
 
 local function TeleportToPlayer(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target or not target.Character then
-        Fluent:Notify({ Title = "Teleport", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return
     end
     local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
     if not targetRoot then
-        Fluent:Notify({ Title = "Teleport", Content = "No root part!", Duration = 2 })
+        print("No root part!")
         return
     end
     local myChar = getCharacter()
@@ -920,23 +902,23 @@ local function TeleportToPlayer(playerName)
         pcall(function()
             myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 1.5, 1.5)
         end)
-        Fluent:Notify({ Title = "Teleport", Content = "Teleported to " .. target.Name, Duration = 2 })
+        print("Teleported to " .. target.Name)
     end
 end
 
 local function StartKill(playerName)
     local target = Players:FindFirstChild(playerName)
     if not target then
-        Fluent:Notify({ Title = "Kill", Content = "Player not found!", Duration = 2 })
+        print("Player not found!")
         return false
     end
     if not target.Character then
-        Fluent:Notify({ Title = "Kill", Content = "Target has no character!", Duration = 2 })
+        print("Target has no character!")
         return false
     end
     CurrentKillTarget = target
     KillActive = true
-    Fluent:Notify({ Title = "Kill", Content = "Targeting " .. target.Name, Duration = 2 })
+    print("Targeting " .. target.Name)
     
     if KillLoopConnection then KillLoopConnection:Disconnect() end
     KillLoopConnection = RunService.Heartbeat:Connect(function()
@@ -947,9 +929,8 @@ local function StartKill(playerName)
         
         local target = CurrentKillTarget
         if not target or not target.Character then
-            Fluent:Notify({ Title = "Kill", Content = "Target lost!", Duration = 2 })
+            print("Target lost!")
             KillActive = false
-            if KillToggleObj then KillToggleObj:SetValue(false) end
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
         end
@@ -958,9 +939,8 @@ local function StartKill(playerName)
         local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
         
         if not targetHum or not targetRoot or targetHum.Health <= 0 then
-            Fluent:Notify({ Title = "Kill", Content = "Target eliminated!", Duration = 2 })
+            print("Target eliminated!")
             KillActive = false
-            if KillToggleObj then KillToggleObj:SetValue(false) end
             CurrentKillTarget = nil
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
@@ -988,191 +968,101 @@ local function StopKill()
         KillLoopConnection:Disconnect()
         KillLoopConnection = nil
     end
-    Fluent:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
+    print("Stopped killing")
 end
 
--- ============ WINDOW SETUP - FIXED ============
-local windowSize = UDim2.fromOffset(450, 550)
-local tabWidth = 120
-local toggleSize = 65
-local togglePos = 90
+-- ============ WINDOW SETUP - LUMINOSITY ============
+local Window = Luminosity.new("SON HUB V3.5", "Made by SonDepTrai", 4370345701)
 
-if isSmallScreen or isMobile then
-    windowSize = UDim2.fromOffset(330, 470)
-    tabWidth = 75
-    toggleSize = 50
-    togglePos = 60
-end
+-- Tab 1: Farm
+local FarmTab = Window.Tab("Farm", 6026568198)
 
--- TẠO WINDOW THEO ĐÚNG CẤU TRÚC FLUENT PRO
-local Window = Fluent:CreateWindow({
-    Title = "SON HUB V3.5",
-    SubTitle = "Made by SonDepTrai",
-    TabWidth = tabWidth,
-    Size = windowSize,
-    Acrylic = false,
-    Theme = "Ash Gray",  -- Dùng theme ổn định
-    MinimizeKey = Enum.KeyCode.RightControl,
-    Search = true,
-    UserInfo = true,
-    UserInfoTop = true,
-    UserInfoTitle = Player.DisplayName or "User",
-    UserInfoSubtitle = "@" .. Player.Name,
-    UserInfoColor = Color3.fromRGB(180, 10, 20),
-})
+-- Farm Folder
+local FarmFolder = FarmTab.Folder("Auto Farm", "Farm settings and controls")
 
--- TẠO TABS
-local FarmTab = Window:AddTab({ Title = "Farm", Icon = "solar/leaf-bold" })
-local ConfigFarmTab = Window:AddTab({ Title = "Config Farm", Icon = "solar/cpu-bold" })
-local TeleportTab = Window:AddTab({ Title = "Teleport", Icon = "solar/planet-bold" })
-local PlayerTab = Window:AddTab({ Title = "Player", Icon = "lucide/users" })
-local QuestTab = Window:AddTab({ Title = "Quest", Icon = "solar/crown-bold" })
-local MiscTab = Window:AddTab({ Title = "Misc", Icon = "solar/settings-bold" })
+FarmFolder.Button("Refresh Weapons", "Click to refresh weapon list", function()
+    print("Weapons refreshed")
+end)
 
--- ============ CÁC PHẦN CÒN LẠI GIỮ NGUYÊN ============
-
-local function getAvailableWeapons()
-    local weapons = {"None"}
-    local backpack = Player:FindFirstChild("Backpack")
-    if backpack then
-        for _, v in pairs(backpack:GetChildren()) do
-            if v:IsA("Tool") then
-                table.insert(weapons, v.Name)
-            end
-        end
+FarmFolder.Toggle("Auto Farm", function(Status)
+    FarmEnabled = Status
+    if not Status and CurrentTarget then
+        unfreezeNPC(CurrentTarget)
+        CurrentTarget = nil
     end
-    return weapons
-end
+    print("Auto Farm: " .. tostring(Status))
+end)
 
-local FarmSection = FarmTab:AddSection("Auto Farm")
+FarmFolder.Toggle("Auto Chest", function(Status)
+    ChestEnabled = Status
+    print("Auto Chest: " .. tostring(Status))
+end)
 
-FarmSection:AddButton({
-    Title = "Refresh Weapons",
-    Callback = function()
-        local weapons = getAvailableWeapons()
-        Fluent:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
-        pcall(function()
-            if WeaponDropdown then
-                WeaponDropdown:SetValues(weapons)
-            end
-        end)
-    end,
-})
+-- Auto Bring Folder
+local BringFolder = FarmTab.Folder("Auto Bring", "Auto bring items to you")
 
-FarmSection:AddToggle("AutoFarm", {
-    Title = "Auto Farm ON/OFF",
-    Default = false,
-    Callback = function(v)
-        FarmEnabled = v
-        if not v and CurrentTarget then
-            unfreezeNPC(CurrentTarget)
-            CurrentTarget = nil
-        end
-    end,
-})
+BringFolder.Toggle("Auto Bring Normal Fruit", function(Status)
+    AutoBringNormalFruit = Status
+    print("Auto Bring Normal Fruit: " .. tostring(Status))
+end)
 
-local WeaponDropdown = FarmSection:AddDropdown("WeaponSelect", {
-    Title = "Select Weapon",
-    Values = getAvailableWeapons(),
-    Default = "None",
-    Callback = function(v)
-        if v == "None" then
-            SelectedWeapon = nil
-            ForceEquip = false
-        else
-            SelectedWeapon = v
-            ForceEquip = true
-            equipWeapon(v)
-        end
-    end,
-})
+BringFolder.Toggle("Auto Bring Demon Fruit", function(Status)
+    AutoBringDemonFruit = Status
+    print("Auto Bring Demon Fruit: " .. tostring(Status))
+end)
 
-FarmSection:AddDropdown("FarmModeSelect", {
-    Title = "Farm Mode",
-    Values = {"Easy", "Medium", "Hardcore"},
-    Default = "Easy",
-    Callback = function(v)
-        FarmMode = v
-        if CurrentTarget then
-            unfreezeNPC(CurrentTarget)
-            CurrentTarget = nil
-        end
-        Fluent:Notify({ Title = "Farm Mode", Content = "Switched to " .. v, Duration = 2 })
-    end,
-})
+BringFolder.Toggle("Auto Bring Compass", function(Status)
+    AutoBringCompass = Status
+    print("Auto Bring Compass: " .. tostring(Status))
+end)
 
-FarmSection:AddToggle("AutoChest", {
-    Title = "Auto Chest",
-    Default = false,
-    Callback = function(v) ChestEnabled = v end,
-})
+BringFolder.Toggle("Auto Bring Old Book", function(Status)
+    AutoBringOldBook = Status
+    print("Auto Bring Old Book: " .. tostring(Status))
+end)
 
-FarmSection:AddDivider()
+-- Tab 2: Config Farm
+local ConfigTab = Window.Tab("Config Farm", 6022668945)
 
-local BringSection = FarmTab:AddSection("Auto Bring")
+-- Auto Skill
+local SkillFolder = ConfigTab.Folder("Auto Skill", "Auto skill settings")
 
-BringSection:AddToggle("AutoBringNormalFruit", {
-    Title = "Auto Bring Normal Fruit",
-    Default = false,
-    Callback = function(v) AutoBringNormalFruit = v end,
-})
-
-BringSection:AddToggle("AutoBringDemonFruit", {
-    Title = "Auto Bring Demon Fruit",
-    Default = false,
-    Callback = function(v) AutoBringDemonFruit = v end,
-})
-
-BringSection:AddToggle("AutoBringCompass", {
-    Title = "Auto Bring Compass",
-    Default = false,
-    Callback = function(v) AutoBringCompass = v end,
-})
-
-BringSection:AddToggle("AutoBringOldBook", {
-    Title = "Auto Bring Old Book",
-    Default = false,
-    Callback = function(v) AutoBringOldBook = v end,
-})
-
-local ConfigSection = ConfigFarmTab:AddSection("Auto Skill")
-
-ConfigSection:AddToggle("AutoSkill", {
-    Title = "Auto Skill ON/OFF",
-    Default = false,
-    Callback = function(v)
-        AutoSkillEnabled = v
-    end,
-})
+SkillFolder.Toggle("Auto Skill", function(Status)
+    AutoSkillEnabled = Status
+    print("Auto Skill: " .. tostring(Status))
+end)
 
 for _, skill in ipairs(AvailableSkills) do
-    ConfigSection:AddToggle("Skill_" .. skill, {
-        Title = "Skill " .. skill,
-        Default = false,
-        Callback = function(v)
-            SelectedSkills[skill] = v
-            local count = 0
-            for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
-            Fluent:Notify({ Title = "Skills", Content = "Selected " .. count .. " skills", Duration = 1 })
-        end,
-    })
+    SkillFolder.Toggle("Skill " .. skill, function(Status)
+        SelectedSkills[skill] = Status
+        local count = 0
+        for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
+        print("Selected " .. count .. " skills")
+    end)
 end
 
-ConfigFarmTab:AddDivider()
+-- Auto Haki
+local HakiFolder = ConfigTab.Folder("Auto Haki", "Auto Haki settings")
 
-local HakiSection = ConfigFarmTab:AddSection("Auto Haki")
+HakiFolder.Toggle("Auto Haki", function(Status)
+    AutoHakiEnabled = Status
+    print("Auto Haki: " .. tostring(Status))
+end)
 
-HakiSection:AddToggle("AutoHaki", {
-    Title = "Auto Haki ON/OFF",
-    Default = false,
-    Callback = function(v)
-        AutoHakiEnabled = v
-    end,
-})
+-- Tab 3: Teleport
+local TeleportTab = Window.Tab("Teleport", 6026568198)
 
-local TeleportSection = TeleportTab:AddSection("Teleport")
+local TeleportFolder = TeleportTab.Folder("Teleport", "Teleport to locations")
 
 local Islands = {
+    "Sam", "Fisher", "SectorG9", "MarineFord", "Purple Island",
+    "Water tower", "WindMills", "OneHouse", "restaurant", "KingCrab",
+    "CaveIsland", "BigTree", "Krizma Island", "Gun Island", "Accient Island",
+    "C Island", "Bar Island", "Anna House", "Crocodile Land", "Three Tree",
+    "Hole Land", "Many Land", "Haki Land", "Vokun Land", "BigSnow"
+}
+
+local IslandPositions = {
     ["Sam"] = Vector3.new(-1282.53, 218.00, -1347.59),
     ["Fisher"] = Vector3.new(-1689.73, 216.00, -320.37),
     ["SectorG9"] = Vector3.new(-2681.07, 216.00, -943.29),
@@ -1200,297 +1090,125 @@ local Islands = {
     ["BigSnow"] = Vector3.new(6275.28, 487.00, -1829.30),
 }
 
-local IslandNamesList = {"None"}
-for name in pairs(Islands) do
-    table.insert(IslandNamesList, name)
+for _, island in ipairs(Islands) do
+    TeleportFolder.Button(island, "Teleport to " .. island, function()
+        local char = getCharacter()
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp and IslandPositions[island] then
+            pcall(function()
+                hrp.CFrame = CFrame.new(IslandPositions[island]) + Vector3.new(0, 3, 0)
+            end)
+            print("Teleported to " .. island)
+        end
+    end)
 end
-table.sort(IslandNamesList)
 
-local SelectedIsland = "None"
+TeleportFolder.Button("Teleport to Rayleigh", "Teleport to Rayleigh", function()
+    teleportToRayleigh()
+    print("Teleported to Rayleigh")
+end)
 
-TeleportSection:AddDropdown("IslandSelect", {
-    Title = "Select Island",
-    Values = IslandNamesList,
-    Default = "None",
-    Callback = function(v) 
-        SelectedIsland = v
-        if v ~= "None" and Islands[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(Islands[v]) + Vector3.new(0, 3, 0)
-                end)
-                Fluent:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
+-- Tab 4: Player
+local PlayerTab = Window.Tab("Player", 6026568198)
+
+local PlayerFolder = PlayerTab.Folder("Player Control", "Player control options")
+
+-- Player list dropdown - using buttons for simplicity
+local PlayerList = GetPlayerList()
+for _, name in ipairs(PlayerList) do
+    if name ~= "None" then
+        PlayerFolder.Button("Select " .. name, "Select player: " .. name, function()
+            SelectedPlayerName = name
+            print("Selected player: " .. name)
+        end)
     end
-})
-
-TeleportSection:AddDivider()
-
-local ShopNPCs = {
-    ["Sniper Shop"] = Vector3.new(-1843.3797607421875, 221.99998474121094, 3409.400634765625),
-    ["Sword Shop"] = Vector3.new(1005.53515625, 223.99998474121094, -3337.915283203125),
-    ["Strange Dealer"] = Vector3.new(1240.8421630859375, 224.20001220703125, -3240.296875),
-}
-
-local ShopNames = {"None"}
-for name in pairs(ShopNPCs) do
-    table.insert(ShopNames, name)
 end
-table.sort(ShopNames)
 
-local SelectedShop = "None"
-
-TeleportSection:AddDropdown("ShopSelect", {
-    Title = "Shop Teleport",
-    Values = ShopNames,
-    Default = "None",
-    Callback = function(v)
-        SelectedShop = v
-        if v ~= "None" and ShopNPCs[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(ShopNPCs[v]) + Vector3.new(0, 3, 0)
-                end)
-                Fluent:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end
-})
-
-TeleportSection:AddDivider()
-
-local QuestNPCs = {
-    ["Daily Quest"] = Vector3.new(-2606.061279296875, 253.69842529296875, 1087.8436279296875),
-    ["Sam Quest"] = Vector3.new(-1303.5345458984375, 217.99998474121094, -1352.5908203125),
-    ["Krizma Sword"] = Vector3.new(-1074.173828125, 360.999694824219, 1666.887084969375),
-    ["Mode Position"] = Vector3.new(2053.41552734375, 497.69830322265625, -614.63305640625),
-}
-
-local QuestNames = {"None"}
-for name in pairs(QuestNPCs) do
-    table.insert(QuestNames, name)
-end
-table.sort(QuestNames)
-
-local SelectedQuest = "None"
-
-TeleportSection:AddDropdown("QuestSelect", {
-    Title = "Quest NPC Teleport",
-    Values = QuestNames,
-    Default = "None",
-    Callback = function(v)
-        SelectedQuest = v
-        if v ~= "None" and QuestNPCs[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(QuestNPCs[v]) + Vector3.new(0, 3, 0)
-                end)
-                Fluent:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end
-})
-
-TeleportSection:AddDivider()
-
-local MiscNPCs = {
-    ["Stats Fruit Roll"] = Vector3.new(801.1287231445312, 230.37062072753906, 5354.083984375),
-    ["Roll Stats Fruit"] = Vector3.new(801.3805541992188, 230.37062072753906, 5353.8662109375),
-}
-
-local MiscNames = {"None"}
-for name in pairs(MiscNPCs) do
-    table.insert(MiscNames, name)
-end
-table.sort(MiscNames)
-
-local SelectedMisc = "None"
-
-TeleportSection:AddDropdown("MiscSelect", {
-    Title = "Misc NPC Teleport",
-    Values = MiscNames,
-    Default = "None",
-    Callback = function(v)
-        SelectedMisc = v
-        if v ~= "None" and MiscNPCs[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(MiscNPCs[v]) + Vector3.new(0, 3, 0)
-                end)
-                Fluent:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end
-})
-
-TeleportSection:AddButton({
-    Title = "Teleport to Rayleigh",
-    Callback = function() teleportToRayleigh() end,
-})
-
-local PlayersSection = PlayerTab:AddSection("Player Control")
-
-MainPlayerDropdown = PlayersSection:AddDropdown("MainPlayerSelect", {
-    Title = "Select Player",
-    Values = GetPlayerList(),
-    Default = "None",
-    Callback = function(v)
-        SelectedPlayerName = v
-        if v ~= "None" then
-            CurrentKillTarget = Players:FindFirstChild(v)
-        end
-    end
-})
-
-PlayersSection:AddButton({
-    Title = "Refresh List",
-    Callback = function()
-        UpdatePlayerDropdown()
-        Fluent:Notify({ Title = "Refresh", Content = "Player list updated", Duration = 2 })
-    end
-})
-
-PlayersSection:AddDivider()
-
-SpectateToggleObj = PlayersSection:AddToggle("SpectateToggle", {
-    Title = "Spectate Player",
-    Default = false,
-    Callback = function(v)
-        if v then
-            if SelectedPlayerName ~= "None" then
-                if not StartSpectate(SelectedPlayerName) then
-                    if SpectateToggleObj then SpectateToggleObj:SetValue(false) end
-                end
-            else
-                Fluent:Notify({ Title = "Spectate", Content = "Select a player first!", Duration = 2 })
-                if SpectateToggleObj then SpectateToggleObj:SetValue(false) end
-            end
-        else
+PlayerFolder.Button("Spectate Player", "Spectate selected player", function()
+    if SelectedPlayerName and SelectedPlayerName ~= "None" then
+        if Spectating then
             StopSpectate()
-        end
-    end
-})
-
-PlayersSection:AddButton({
-    Title = "Teleport to Player",
-    Callback = function()
-        if SelectedPlayerName ~= "None" then
-            TeleportToPlayer(SelectedPlayerName)
         else
-            Fluent:Notify({ Title = "Teleport", Content = "Select a player first!", Duration = 2 })
+            StartSpectate(SelectedPlayerName)
         end
+    else
+        print("Select a player first!")
     end
-})
+end)
 
-KillToggleObj = PlayersSection:AddToggle("KillToggle", {
-    Title = "Kill Player",
-    Default = false,
-    Callback = function(v)
-        if v then
-            if SelectedPlayerName ~= "None" then
-                StartKill(SelectedPlayerName)
-            else
-                Fluent:Notify({ Title = "Kill", Content = "Select a player first!", Duration = 2 })
-                if KillToggleObj then KillToggleObj:SetValue(false) end
-            end
+PlayerFolder.Button("Teleport to Player", "Teleport to selected player", function()
+    if SelectedPlayerName and SelectedPlayerName ~= "None" then
+        TeleportToPlayer(SelectedPlayerName)
+    else
+        print("Select a player first!")
+    end
+end)
+
+PlayerFolder.Toggle("Kill Player", function(Status)
+    if Status then
+        if SelectedPlayerName and SelectedPlayerName ~= "None" then
+            StartKill(SelectedPlayerName)
         else
-            StopKill()
+            print("Select a player first!")
+            return false
         end
+    else
+        StopKill()
     end
-})
+end)
 
-PlayersSection:AddDivider()
+-- Utility
+local UtilityFolder = PlayerTab.Folder("Utility", "Utility options")
 
-local UtilitySection = PlayerTab:AddSection("Utility")
+UtilityFolder.Toggle("Fly", function(Status)
+    toggleFly()
+    print("Fly: " .. tostring(FlyEnabled))
+end)
 
-local FlyToggle = UtilitySection:AddToggle("FlyToggle", {
-    Title = "Fly",
-    Default = false,
-    Callback = function(v)
-        if v ~= FlyEnabled then
-            toggleFly()
-        end
-    end
-})
+UtilityFolder.Slider("Fly Speed", {Precise = true, Default = 200, Min = 50, Max = 1000}, function(Status)
+    FlySpeed = Status
+    print("Fly Speed: " .. tostring(Status))
+end)
 
-UtilitySection:AddSlider("FlySpeed", {
-    Title = "Fly Speed",
-    Default = 200,
-    Min = 50,
-    Max = 1000,
-    Rounding = 1,
-    Callback = function(v)
-        FlySpeed = v
-    end
-})
+UtilityFolder.Toggle("Noclip", function(Status)
+    toggleNoclip()
+    print("Noclip: " .. tostring(NoclipEnabled))
+end)
 
-UtilitySection:AddDivider()
+UtilityFolder.Toggle("ESP (Players)", function(Status)
+    toggleESP()
+    print("ESP: " .. tostring(ESPEnabled))
+end)
 
-local NoclipToggle = UtilitySection:AddToggle("NoclipToggle", {
-    Title = "Noclip",
-    Default = false,
-    Callback = function(v)
-        if v ~= NoclipEnabled then
-            toggleNoclip()
-        end
-    end
-})
+-- Tab 5: Quest
+local QuestTab = Window.Tab("Quest", 6022668945)
 
-UtilitySection:AddDivider()
+local QuestFolder = QuestTab.Folder("Haki Quest", "Haki quest settings")
 
-local ESPToggle = UtilitySection:AddToggle("ESPToggle", {
-    Title = "ESP (Players)",
-    Default = false,
-    Callback = function(v)
-        if v ~= ESPEnabled then
-            toggleESP()
-        end
-    end
-})
-
-local QuestSection = QuestTab:AddSection("Haki Quest")
-
-QuestSection:AddToggle("AutoHakiQuest", {
-    Title = "Auto Collect Rings",
-    Default = false,
-    Callback = function(v)
-        HakiQuestEnabled = v
-        if not v then 
-            CollectedRings = {}
-            currentRingIndex = 1
-            RingTweenActive = false
-        end
-    end,
-})
-
-QuestSection:AddButton({
-    Title = "Teleport to Rayleigh",
-    Callback = function() teleportToRayleigh() end,
-})
-
-QuestSection:AddButton({
-    Title = "Reset Progress",
-    Callback = function()
+QuestFolder.Toggle("Auto Collect Rings", function(Status)
+    HakiQuestEnabled = Status
+    if not Status then 
         CollectedRings = {}
         currentRingIndex = 1
         RingTweenActive = false
-        Fluent:Notify({ Title = "Reset", Content = "Progress reset", Duration = 2 })
-    end,
-})
+    end
+    print("Auto Collect Rings: " .. tostring(Status))
+end)
 
-QuestSection:AddDivider()
+QuestFolder.Button("Teleport to Rayleigh", "Teleport to Rayleigh", function()
+    teleportToRayleigh()
+    print("Teleported to Rayleigh")
+end)
 
--- ============ FISHING ============
-local FishingSection = QuestTab:AddSection("Auto Fishing")
+QuestFolder.Button("Reset Progress", "Reset ring collection progress", function()
+    CollectedRings = {}
+    currentRingIndex = 1
+    RingTweenActive = false
+    print("Progress reset")
+end)
+
+-- Auto Fishing
+local FishingFolder = QuestTab.Folder("Auto Fishing", "Auto fishing settings")
 
 local AutoFishingEnabled = false
 local AutoMinigameEnabled = false
@@ -1662,115 +1380,29 @@ task.spawn(function()
     end
 end)
 
-FishingSection:AddToggle("AutoFishing", {
-    Title = "Auto Fish",
-    Default = false,
-    Callback = function(v)
-        AutoFishingEnabled = v
-        if v then
-            FishingState = "IDLE"
-            EquipRod()
-        end
-    end,
-})
-
-FishingSection:AddToggle("AutoMinigame", {
-    Title = "Auto Minigame (Beta)",
-    Default = false,
-    Callback = function(v)
-        AutoMinigameEnabled = v
-    end,
-})
-
-local MiscSection = MiscTab:AddSection("Settings")
-
-MiscSection:AddToggle("AntiAFK", {
-    Title = "Anti AFK",
-    Default = true,
-    Callback = function(v)
-        AntiAFKEnabled = v
-        setupAntiAFK()
-    end,
-})
-
-MiscSection:AddDivider()
-
-local ThemeSection = MiscTab:AddSection("Themes")
-
-local themes = {
-    "AMOLED", "Ash Gray", "Blood Red", "Cyanic", "Amber Glow", "Deep Violet",
-    "Neon Cyber", "Neon Purple", "Royal Blue", "Deep Ocean", "RGB", "Orange",
-    "Charcoal", "Pearl White", "Midnight", "Galaxy Purple", "Cosmic Violet", "Cotton Candy"
-}
-
-for _, theme in ipairs(themes) do
-    ThemeSection:AddButton({
-        Title = theme,
-        Callback = function()
-            Fluent:SetTheme(theme)
-            Fluent:Notify({ Title = "Theme", Content = theme .. " applied", Duration = 2 })
-        end,
-    })
-end
-
-MiscSection:AddDivider()
-
-local InfoSection = MiscTab:AddSection("Info")
-
-InfoSection:AddParagraph({
-    Title = "SON HUB V3.5",
-    Content = "Created by SonDepTrai\nVersion 3.5\nDiscord: https://discord.gg/faZagWVm72",
-})
-
-InfoSection:AddButton({
-    Title = "Copy Discord Link",
-    Callback = function()
-        setclipboard("https://discord.gg/faZagWVm72")
-        Fluent:Notify({ Title = "Copied!", Content = "Discord link copied", Duration = 2 })
-    end,
-})
-
--- ============ EVENT HANDLERS ============
-Players.PlayerAdded:Connect(function()
-    task.wait(0.5)
-    UpdatePlayerDropdown()
-    if Spectating and CurrentSpectatePlayer then
-        local stillExists = Players:FindFirstChild(CurrentSpectatePlayer.Name)
-        if not stillExists then
-            StopSpectate()
-            if SpectateToggleObj then SpectateToggleObj:SetValue(false) end
-        end
+FishingFolder.Toggle("Auto Fish", function(Status)
+    AutoFishingEnabled = Status
+    if Status then
+        FishingState = "IDLE"
+        EquipRod()
     end
-    if KillActive and CurrentKillTarget then
-        local stillExists = Players:FindFirstChild(CurrentKillTarget.Name)
-        if not stillExists then
-            KillActive = false
-            if KillToggleObj then KillToggleObj:SetValue(false) end
-            CurrentKillTarget = nil
-            if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
-        end
-    end
+    print("Auto Fish: " .. tostring(Status))
 end)
 
-Players.PlayerRemoving:Connect(function()
-    task.wait(0.5)
-    UpdatePlayerDropdown()
-    if Spectating and CurrentSpectatePlayer then
-        local stillExists = Players:FindFirstChild(CurrentSpectatePlayer.Name)
-        if not stillExists then
-            StopSpectate()
-            if SpectateToggleObj then SpectateToggleObj:SetValue(false) end
-        end
-    end
-    if KillActive and CurrentKillTarget then
-        local stillExists = Players:FindFirstChild(CurrentKillTarget.Name)
-        if not stillExists then
-            KillActive = false
-            if KillToggleObj then KillToggleObj:SetValue(false) end
-            CurrentKillTarget = nil
-            if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
-        end
-    end
+FishingFolder.Toggle("Auto Minigame (Beta)", function(Status)
+    AutoMinigameEnabled = Status
+    print("Auto Minigame: " .. tostring(Status))
+end)
+
+-- Tab 6: Misc
+local MiscTab = Window.Tab("Misc", 6026568198)
+
+local MiscFolder = MiscTab.Folder("Settings", "Settings and info")
+
+MiscFolder.Toggle("Anti AFK", function(Status)
+    AntiAFKEnabled = Status
+    setupAntiAFK()
+    print("Anti AFK: " .. tostring(Status))
 end)
 
 -- ============ TOGGLE BUTTON ============
@@ -1780,8 +1412,8 @@ toggleGui.Parent = Player:WaitForChild("PlayerGui")
 toggleGui.ResetOnSpawn = false
 
 local toggleBtn = Instance.new("ImageButton")
-toggleBtn.Size = UDim2.new(0, toggleSize, 0, toggleSize)
-toggleBtn.Position = UDim2.new(0, 15, 0, togglePos)
+toggleBtn.Size = UDim2.new(0, 55, 0, 55)
+toggleBtn.Position = UDim2.new(0, 15, 0, 90)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 toggleBtn.BackgroundTransparency = 0.3
 toggleBtn.Image = "rbxassetid://86946036155828"
@@ -1856,7 +1488,7 @@ local AdminUserIds = { [1425918021] = true, [3160094389] = true }
 local function CheckForAdmins()
     for _, player in ipairs(Players:GetPlayers()) do
         if AdminUserIds[player.UserId] then
-            Fluent:Notify({ Title = "Admin Detected", Content = player.Name .. " joined! Leaving...", Duration = 3, Type = "Error" })
+            print("Admin Detected: " .. player.Name .. " joined! Leaving...")
             task.wait(1)
             pcall(function()
                 game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1870,7 +1502,7 @@ CheckForAdmins()
 Players.PlayerAdded:Connect(function(player)
     task.wait(0.5)
     if AdminUserIds[player.UserId] then
-        Fluent:Notify({ Title = "Admin Joined", Content = player.Name .. " joined! Leaving...", Duration = 3, Type = "Error" })
+        print("Admin Joined: " .. player.Name .. " joined! Leaving...")
         task.wait(1)
         pcall(function()
             game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1883,6 +1515,13 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({ Title = "SON HUB V3.5", Content = "Loaded Successfully!", Duration = 3 })
+-- ============ KEYBIND ============
+game:GetService("UserInputService").InputBegan:Connect(function(Input)
+    if Input.KeyCode == Enum.KeyCode.RightControl then
+        Window:Toggle()
+    end
+end)
+
+print("SON HUB V3.5 Loaded Successfully!")
 task.wait(0.1)
-Window:SelectTab(1)
+Window:Show()
