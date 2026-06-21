@@ -37,7 +37,7 @@ local ESPEnabled = false
 local ESPFolder = nil
 local ESPConnection = nil
 local menuVisible = true
-local AutoHakiEnabled = false  -- Thêm biến này
+local AutoHakiEnabled = false
 
 local AutoSkillEnabled = false
 local SelectedSkills = {}
@@ -991,7 +991,7 @@ local function StopKill()
     Fluent:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
 end
 
--- ============ WINDOW SETUP ============
+-- ============ WINDOW SETUP - FIXED ============
 local windowSize = UDim2.fromOffset(450, 550)
 local tabWidth = 120
 local toggleSize = 65
@@ -1004,19 +1004,24 @@ if isSmallScreen or isMobile then
     togglePos = 60
 end
 
--- TẠO WINDOW - PHẦN QUAN TRỌNG NHẤT
+-- TẠO WINDOW THEO ĐÚNG CẤU TRÚC FLUENT PRO
 local Window = Fluent:CreateWindow({
     Title = "SON HUB V3.5",
     SubTitle = "Made by SonDepTrai",
     TabWidth = tabWidth,
     Size = windowSize,
     Acrylic = false,
-    Theme = "Blood Red",  -- Đổi từ RGB sang Blood Red để tránh lỗi
+    Theme = "Blood Red",
     MinimizeKey = Enum.KeyCode.RightControl,
-    Search = true,  -- THÊM Search = true
+    Search = true,
+    UserInfo = true,  -- QUAN TRỌNG: bật UserInfo
+    UserInfoTop = true,
+    UserInfoTitle = Player.DisplayName or "User",
+    UserInfoSubtitle = "@" .. Player.Name,
+    UserInfoColor = Color3.fromRGB(180, 10, 20),
 })
 
--- TẠO TABS - CÁCH MỚI
+-- TẠO TABS
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "solar/leaf-bold" })
 local ConfigFarmTab = Window:AddTab({ Title = "Config Farm", Icon = "solar/cpu-bold" })
 local TeleportTab = Window:AddTab({ Title = "Teleport", Icon = "solar/planet-bold" })
@@ -1024,7 +1029,9 @@ local PlayerTab = Window:AddTab({ Title = "Player", Icon = "lucide/users" })
 local QuestTab = Window:AddTab({ Title = "Quest", Icon = "solar/crown-bold" })
 local MiscTab = Window:AddTab({ Title = "Misc", Icon = "solar/settings-bold" })
 
--- ============ FARM TAB ============
+-- ============ CÁC PHẦN CÒN LẠI GIỮ NGUYÊN ============
+-- (Giữ nguyên tất cả các phần từ Farm Section đến hết, chỉ sửa phần Window)
+
 local function getAvailableWeapons()
     local weapons = {"None"}
     local backpack = Player:FindFirstChild("Backpack")
@@ -1129,7 +1136,6 @@ BringSection:AddToggle("AutoBringOldBook", {
     Callback = function(v) AutoBringOldBook = v end,
 })
 
--- ============ CONFIG FARM TAB ============
 local ConfigSection = ConfigFarmTab:AddSection("Auto Skill")
 
 ConfigSection:AddToggle("AutoSkill", {
@@ -1165,7 +1171,6 @@ HakiSection:AddToggle("AutoHaki", {
     end,
 })
 
--- ============ TELEPORT TAB ============
 local TeleportSection = TeleportTab:AddSection("Teleport")
 
 local Islands = {
@@ -1333,7 +1338,6 @@ TeleportSection:AddButton({
     Callback = function() teleportToRayleigh() end,
 })
 
--- ============ PLAYER TAB ============
 local PlayersSection = PlayerTab:AddSection("Player Control")
 
 MainPlayerDropdown = PlayersSection:AddDropdown("MainPlayerSelect", {
@@ -1454,7 +1458,6 @@ local ESPToggle = UtilitySection:AddToggle("ESPToggle", {
     end
 })
 
--- ============ QUEST TAB ============
 local QuestSection = QuestTab:AddSection("Haki Quest")
 
 QuestSection:AddToggle("AutoHakiQuest", {
@@ -1680,7 +1683,6 @@ FishingSection:AddToggle("AutoMinigame", {
     end,
 })
 
--- ============ MISC TAB ============
 local MiscSection = MiscTab:AddSection("Settings")
 
 MiscSection:AddToggle("AntiAFK", {
