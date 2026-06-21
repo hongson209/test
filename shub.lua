@@ -1,4 +1,5 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/StyearX/Fluent-Modded/releases/download/Fluent/FluentPro"))()
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInput = game:GetService("VirtualInputManager")
@@ -13,6 +14,7 @@ local isMobile = UserInputService.TouchEnabled
 local screenSize = workspace.CurrentCamera.ViewportSize
 local isSmallScreen = screenSize.X < 800 or screenSize.Y < 600 or isMobile
 
+-- ============ VARIABLES ============
 local FarmEnabled = false
 local ChestEnabled = false
 local SelectedWeapon = nil
@@ -35,6 +37,7 @@ local ESPEnabled = false
 local ESPFolder = nil
 local ESPConnection = nil
 local menuVisible = true
+local AutoHakiEnabled = false  -- Thêm biến này
 
 local AutoSkillEnabled = false
 local SelectedSkills = {}
@@ -51,6 +54,7 @@ local NormalFruitNames = {
 
 local RAYLEIGH_POSITION = Vector3.new(-1009.7536010742188, 4011.46484375, 10135.1171875)
 
+-- ============ MOB DEFINITIONS ============
 local hardcoreMobs = {
     ["Lv2000 Crocodile"] = true, ["Lv20000 Whitebeard"] = true,
     ["Lv2000 Vokun"] = true, ["Lv40 Cave Demon [Weakened]"] = true,
@@ -90,6 +94,7 @@ local FruitNames = {
     "Chilly Fruit", "Candy Fruit", "Bomb Fruit", "Buddha Fruit"
 }
 
+-- ============ HELPER FUNCTIONS ============
 local function getCharacter()
     return Player.Character or Player.CharacterAdded:Wait()
 end
@@ -163,6 +168,7 @@ local function equipWeapon(toolName)
     return tool.Parent == char
 end
 
+-- ============ AUTO EQUIP ============
 task.spawn(function()
     while task.wait(0.5) do
         if ForceEquip and SelectedWeapon then
@@ -177,6 +183,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ AUTO SKILL ============
 task.spawn(function()
     local function pressKey(key)
         local keyCode = Enum.KeyCode[key]
@@ -216,6 +223,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ AUTO HAKI ============
 task.spawn(function()
     while true do
         task.wait(2)
@@ -234,6 +242,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ AUTO BRING FUNCTIONS ============
 task.spawn(function()
     while true do
         task.wait(0.7)
@@ -343,6 +352,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ FARM FUNCTIONS ============
 local function findMob()
     local aliveFolder = workspace:FindFirstChild("Alive")
     if not aliveFolder then return nil, nil, nil end
@@ -448,6 +458,7 @@ local function attack()
     end)
 end
 
+-- ============ FARM LOOP ============
 task.spawn(function()
     while task.wait(0.05) do
         if not FarmEnabled then
@@ -480,6 +491,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ AUTO CHEST ============
 task.spawn(function()
     while task.wait(0.2) do
         if not ChestEnabled then continue end
@@ -502,6 +514,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ HAKI QUEST ============
 local function getAllRings()
     local rings = {}
     local mapFolder = workspace:FindFirstChild("MapFolder")
@@ -616,6 +629,7 @@ task.spawn(function()
     end
 end)
 
+-- ============ ANTI AFK ============
 local afkConnection = nil
 local function setupAntiAFK()
     if afkConnection then afkConnection:Disconnect() end
@@ -630,6 +644,7 @@ local function setupAntiAFK()
 end
 setupAntiAFK()
 
+-- ============ FLY ============
 local FlyAttachment = nil
 local FlyLinearVelocity = nil
 local FlyBodyGyro = nil
@@ -735,6 +750,7 @@ local function toggleFly()
     end
 end
 
+-- ============ NOCLIP ============
 local function toggleNoclip()
     NoclipEnabled = not NoclipEnabled
     if NoclipEnabled then
@@ -762,6 +778,7 @@ local function toggleNoclip()
     end
 end
 
+-- ============ ESP ============
 local function toggleESP()
     ESPEnabled = not ESPEnabled
     if ESPEnabled then
@@ -808,6 +825,7 @@ local function toggleESP()
     end
 end
 
+-- ============ PLAYER FUNCTIONS ============
 local function GetPlayerList()
     local list = {"None"}
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -973,6 +991,7 @@ local function StopKill()
     Fluent:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
 end
 
+-- ============ WINDOW SETUP ============
 local windowSize = UDim2.fromOffset(450, 550)
 local tabWidth = 120
 local toggleSize = 65
@@ -985,16 +1004,19 @@ if isSmallScreen or isMobile then
     togglePos = 60
 end
 
+-- TẠO WINDOW - PHẦN QUAN TRỌNG NHẤT
 local Window = Fluent:CreateWindow({
     Title = "SON HUB V3.5",
     SubTitle = "Made by SonDepTrai",
     TabWidth = tabWidth,
     Size = windowSize,
     Acrylic = false,
-    Theme = "RGB",
+    Theme = "Blood Red",  -- Đổi từ RGB sang Blood Red để tránh lỗi
     MinimizeKey = Enum.KeyCode.RightControl,
+    Search = true,  -- THÊM Search = true
 })
 
+-- TẠO TABS - CÁCH MỚI
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "solar/leaf-bold" })
 local ConfigFarmTab = Window:AddTab({ Title = "Config Farm", Icon = "solar/cpu-bold" })
 local TeleportTab = Window:AddTab({ Title = "Teleport", Icon = "solar/planet-bold" })
@@ -1002,6 +1024,7 @@ local PlayerTab = Window:AddTab({ Title = "Player", Icon = "lucide/users" })
 local QuestTab = Window:AddTab({ Title = "Quest", Icon = "solar/crown-bold" })
 local MiscTab = Window:AddTab({ Title = "Misc", Icon = "solar/settings-bold" })
 
+-- ============ FARM TAB ============
 local function getAvailableWeapons()
     local weapons = {"None"}
     local backpack = Player:FindFirstChild("Backpack")
@@ -1106,6 +1129,7 @@ BringSection:AddToggle("AutoBringOldBook", {
     Callback = function(v) AutoBringOldBook = v end,
 })
 
+-- ============ CONFIG FARM TAB ============
 local ConfigSection = ConfigFarmTab:AddSection("Auto Skill")
 
 ConfigSection:AddToggle("AutoSkill", {
@@ -1141,6 +1165,7 @@ HakiSection:AddToggle("AutoHaki", {
     end,
 })
 
+-- ============ TELEPORT TAB ============
 local TeleportSection = TeleportTab:AddSection("Teleport")
 
 local Islands = {
@@ -1308,6 +1333,7 @@ TeleportSection:AddButton({
     Callback = function() teleportToRayleigh() end,
 })
 
+-- ============ PLAYER TAB ============
 local PlayersSection = PlayerTab:AddSection("Player Control")
 
 MainPlayerDropdown = PlayersSection:AddDropdown("MainPlayerSelect", {
@@ -1428,6 +1454,7 @@ local ESPToggle = UtilitySection:AddToggle("ESPToggle", {
     end
 })
 
+-- ============ QUEST TAB ============
 local QuestSection = QuestTab:AddSection("Haki Quest")
 
 QuestSection:AddToggle("AutoHakiQuest", {
@@ -1460,6 +1487,7 @@ QuestSection:AddButton({
 
 QuestSection:AddDivider()
 
+-- ============ FISHING ============
 local FishingSection = QuestTab:AddSection("Auto Fishing")
 
 local AutoFishingEnabled = false
@@ -1520,7 +1548,7 @@ local function ClickSelectedButton()
 end
 
 local function SetupMinigameListener()
-    local minigameGui = PlayerGui:FindFirstChild("FishingMinigame")
+    local minigameGui = Player.PlayerGui:FindFirstChild("FishingMinigame")
     if not minigameGui or not minigameGui.Enabled then return false end
     if MinigameActive then return true end
     MinigameActive = true
@@ -1615,7 +1643,7 @@ task.spawn(function()
                 end
             end
             if FishingState == "MINIGAME" then
-                local mg = PlayerGui:FindFirstChild("FishingMinigame")
+                local mg = Player.PlayerGui:FindFirstChild("FishingMinigame")
                 if not mg or not mg.Enabled then
                     FishingState = "IDLE"
                 end
@@ -1652,6 +1680,7 @@ FishingSection:AddToggle("AutoMinigame", {
     end,
 })
 
+-- ============ MISC TAB ============
 local MiscSection = MiscTab:AddSection("Settings")
 
 MiscSection:AddToggle("AntiAFK", {
@@ -1700,6 +1729,7 @@ InfoSection:AddButton({
     end,
 })
 
+-- ============ EVENT HANDLERS ============
 Players.PlayerAdded:Connect(function()
     task.wait(0.5)
     UpdatePlayerDropdown()
@@ -1742,6 +1772,7 @@ Players.PlayerRemoving:Connect(function()
     end
 end)
 
+-- ============ TOGGLE BUTTON ============
 local toggleGui = Instance.new("ScreenGui")
 toggleGui.Name = "SON_Toggle"
 toggleGui.Parent = Player:WaitForChild("PlayerGui")
@@ -1798,6 +1829,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- ============ HIDE NAMETAG ============
 local function HideNametag()
     pcall(function()
         for _, obj in ipairs(Player.PlayerGui:GetDescendants()) do
@@ -1818,6 +1850,7 @@ Player.PlayerGui.DescendantAdded:Connect(function(desc)
     end
 end)
 
+-- ============ ADMIN CHECK ============
 local AdminUserIds = { [1425918021] = true, [3160094389] = true }
 local function CheckForAdmins()
     for _, player in ipairs(Players:GetPlayers()) do
