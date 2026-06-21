@@ -1,36 +1,39 @@
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInput = game:GetService("VirtualInputManager")
-local VirtualUser = game:GetService("VirtualUser")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
-local Player = Players.LocalPlayer
-
-local cloneref = (cloneref or clonereference or function(instance)
-    return instance
-end)
+-- SON HUB V3.5 - WindUI Version
+-- Created by SonDepTrai
 
 local WindUI
+local cloneref = (cloneref or clonereference or function(instance) return instance end)
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+local RunService = cloneref(game:GetService("RunService"))
 
 do
     local ok, result = pcall(function()
         return require("./src/Init")
     end)
-
     if ok then
         WindUI = result
     else
-        if cloneref(game:GetService("RunService")):IsStudio() then
-            WindUI = require(cloneref(ReplicatedStorage:WaitForChild("WindUI"):WaitForChild("Init")))
+        if RunService:IsStudio() or not writefile then
+            WindUI = require(ReplicatedStorage:WaitForChild("WindUI"):WaitForChild("Init"))
         else
             WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
         end
     end
 end
 
--- ============ VARIABLES ============
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInput = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local Player = Players.LocalPlayer
+
+local isMobile = UserInputService.TouchEnabled
+local screenSize = workspace.CurrentCamera.ViewportSize
+local isSmallScreen = screenSize.X < 800 or screenSize.Y < 600 or isMobile
+
+-- Variables
 local FarmEnabled = false
 local ChestEnabled = false
 local SelectedWeapon = nil
@@ -52,7 +55,6 @@ local NoclipConnection = nil
 local ESPEnabled = false
 local ESPFolder = nil
 local ESPConnection = nil
-local AutoHakiEnabled = false
 local menuVisible = true
 
 local AutoSkillEnabled = false
@@ -70,7 +72,6 @@ local NormalFruitNames = {
 
 local RAYLEIGH_POSITION = Vector3.new(-1009.7536010742188, 4011.46484375, 10135.1171875)
 
--- ============ MOB DEFINITIONS ============
 local hardcoreMobs = {
     ["Lv2000 Crocodile"] = true, ["Lv20000 Whitebeard"] = true,
     ["Lv2000 Vokun"] = true, ["Lv40 Cave Demon [Weakened]"] = true,
@@ -110,7 +111,7 @@ local FruitNames = {
     "Chilly Fruit", "Candy Fruit", "Bomb Fruit", "Buddha Fruit"
 }
 
--- ============ HELPER FUNCTIONS ============
+-- Helper Functions
 local function getCharacter()
     return Player.Character or Player.CharacterAdded:Wait()
 end
@@ -184,7 +185,7 @@ local function equipWeapon(toolName)
     return tool.Parent == char
 end
 
--- ============ AUTO EQUIP ============
+-- Auto equip loop
 task.spawn(function()
     while task.wait(0.5) do
         if ForceEquip and SelectedWeapon then
@@ -199,7 +200,7 @@ task.spawn(function()
     end
 end)
 
--- ============ AUTO SKILL ============
+-- Auto skill loop
 task.spawn(function()
     local function pressKey(key)
         local keyCode = Enum.KeyCode[key]
@@ -239,7 +240,7 @@ task.spawn(function()
     end
 end)
 
--- ============ AUTO HAKI ============
+-- Auto Haki loop
 task.spawn(function()
     while true do
         task.wait(2)
@@ -258,7 +259,7 @@ task.spawn(function()
     end
 end)
 
--- ============ AUTO BRING FUNCTIONS ============
+-- Auto bring loops
 task.spawn(function()
     while true do
         task.wait(0.7)
@@ -368,7 +369,7 @@ task.spawn(function()
     end
 end)
 
--- ============ FARM FUNCTIONS ============
+-- Farm functions
 local function findMob()
     local aliveFolder = workspace:FindFirstChild("Alive")
     if not aliveFolder then return nil, nil, nil end
@@ -474,7 +475,7 @@ local function attack()
     end)
 end
 
--- ============ FARM LOOP ============
+-- Farm loop
 task.spawn(function()
     while task.wait(0.05) do
         if not FarmEnabled then
@@ -507,7 +508,7 @@ task.spawn(function()
     end
 end)
 
--- ============ AUTO CHEST ============
+-- Chest farm
 task.spawn(function()
     while task.wait(0.2) do
         if not ChestEnabled then continue end
@@ -530,7 +531,7 @@ task.spawn(function()
     end
 end)
 
--- ============ HAKI QUEST ============
+-- Haki Quest functions
 local function getAllRings()
     local rings = {}
     local mapFolder = workspace:FindFirstChild("MapFolder")
@@ -645,7 +646,7 @@ task.spawn(function()
     end
 end)
 
--- ============ ANTI AFK ============
+-- Anti AFK
 local afkConnection = nil
 local function setupAntiAFK()
     if afkConnection then afkConnection:Disconnect() end
@@ -660,7 +661,7 @@ local function setupAntiAFK()
 end
 setupAntiAFK()
 
--- ============ FLY ============
+-- Fly functions
 local FlyAttachment = nil
 local FlyLinearVelocity = nil
 local FlyBodyGyro = nil
@@ -716,7 +717,7 @@ local function toggleFly()
             local moveY = 0
             local cam = workspace.CurrentCamera
             
-            if UserInputService.TouchEnabled then
+            if isMobile then
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if hum then
                     local dir = hum.MoveDirection
@@ -764,9 +765,9 @@ local function toggleFly()
             end)
         end
     end
-end)
+end
 
--- ============ NOCLIP ============
+-- Noclip
 local function toggleNoclip()
     NoclipEnabled = not NoclipEnabled
     if NoclipEnabled then
@@ -794,7 +795,7 @@ local function toggleNoclip()
     end
 end
 
--- ============ ESP ============
+-- ESP
 local function toggleESP()
     ESPEnabled = not ESPEnabled
     if ESPEnabled then
@@ -841,9 +842,9 @@ local function toggleESP()
     end
 end
 
--- ============ PLAYER FUNCTIONS ============
+-- Player functions
 local function GetPlayerList()
-    local list = {}
+    local list = {"None"}
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= Player then
             table.insert(list, plr.Name)
@@ -857,8 +858,7 @@ local Spectating = false
 local CurrentSpectatePlayer = nil
 local OriginalCameraSubject = nil
 local OriginalCameraType = nil
-local SelectedPlayerName = nil
-local KillLoopConnection = nil
+local SelectedPlayerName = "None"
 
 local function StartSpectate(playerName)
     local target = Players:FindFirstChild(playerName)
@@ -949,6 +949,7 @@ local function StartKill(playerName)
         if not target or not target.Character then
             WindUI:Notify({ Title = "Kill", Content = "Target lost!", Duration = 2 })
             KillActive = false
+            if KillToggleObj then KillToggleObj:SetValue(false) end
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
         end
@@ -959,6 +960,7 @@ local function StartKill(playerName)
         if not targetHum or not targetRoot or targetHum.Health <= 0 then
             WindUI:Notify({ Title = "Kill", Content = "Target eliminated!", Duration = 2 })
             KillActive = false
+            if KillToggleObj then KillToggleObj:SetValue(false) end
             CurrentKillTarget = nil
             if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
             return
@@ -989,432 +991,7 @@ local function StopKill()
     WindUI:Notify({ Title = "Kill", Content = "Stopped", Duration = 2 })
 end
 
--- ============ WINDOW SETUP - WINDUI ============
-local Window = WindUI:CreateWindow({
-    Title = "SON HUB V3.5",
-    Folder = "sonhub",
-    Icon = "solar:folder-2-bold-duotone",
-    NewElements = true,
-    HideSearchBar = false,
-    OpenButton = {
-        Title = "Open SON HUB",
-        CornerRadius = UDim.new(1, 0),
-        StrokeThickness = 3,
-        Enabled = true,
-        Draggable = true,
-        OnlyMobile = false,
-        Scale = 0.5,
-        Color = ColorSequence.new(
-            Color3.fromHex("#FF6B6B"),
-            Color3.fromHex("#FFE66D")
-        ),
-    },
-    Topbar = {
-        Height = 44,
-        ButtonsType = "Mac",
-    },
-})
-
-Window:Tag({
-    Title = "v3.5",
-    Icon = "github",
-    Color = Color3.fromHex("#1c1c1c"),
-    Border = true,
-})
-
--- ============ FARM TAB ============
-local FarmTab = Window:Tab({
-    Title = "Farm",
-    Icon = "solar:leaf-bold",
-})
-
-local FarmSection = FarmTab:Section({
-    Title = "Auto Farm",
-})
-
--- Weapon Dropdown (Select)
-local WeaponDropdown = FarmSection:Dropdown({
-    Title = "Select Weapon",
-    Values = {"None"},
-    Value = "None",
-    Callback = function(v)
-        if v == "None" then
-            SelectedWeapon = nil
-            ForceEquip = false
-        else
-            SelectedWeapon = v
-            ForceEquip = true
-            equipWeapon(v)
-        end
-    end,
-})
-
-FarmSection:Button({
-    Title = "Refresh Weapons",
-    Icon = "",
-    Callback = function()
-        local weapons = {"None"}
-        local backpack = Player:FindFirstChild("Backpack")
-        if backpack then
-            for _, v in pairs(backpack:GetChildren()) do
-                if v:IsA("Tool") then
-                    table.insert(weapons, v.Name)
-                end
-            end
-        end
-        WeaponDropdown:Refresh(weapons)
-        if #weapons > 0 then
-            WeaponDropdown:Select(weapons[1])
-        end
-        WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
-    end,
-})
-
--- Farm Mode Dropdown
-FarmSection:Dropdown({
-    Title = "Farm Mode",
-    Values = {"Easy", "Medium", "Hardcore"},
-    Value = "Easy",
-    Callback = function(v)
-        FarmMode = v
-        if CurrentTarget then
-            unfreezeNPC(CurrentTarget)
-            CurrentTarget = nil
-        end
-        WindUI:Notify({ Title = "Farm Mode", Content = "Switched to " .. v, Duration = 2 })
-    end,
-})
-
-FarmSection:Toggle({
-    Title = "Auto Farm",
-    Desc = "Toggle auto farm on/off",
-    Callback = function(v)
-        FarmEnabled = v
-        if not v and CurrentTarget then
-            unfreezeNPC(CurrentTarget)
-            CurrentTarget = nil
-        end
-    end,
-})
-
-FarmSection:Toggle({
-    Title = "Auto Chest",
-    Desc = "Auto open chests",
-    Callback = function(v)
-        ChestEnabled = v
-    end,
-})
-
--- Auto Bring
-local BringSection = FarmTab:Section({
-    Title = "Auto Bring",
-})
-
-BringSection:Toggle({
-    Title = "Auto Bring Normal Fruit",
-    Callback = function(v)
-        AutoBringNormalFruit = v
-    end,
-})
-
-BringSection:Toggle({
-    Title = "Auto Bring Demon Fruit",
-    Callback = function(v)
-        AutoBringDemonFruit = v
-    end,
-})
-
-BringSection:Toggle({
-    Title = "Auto Bring Compass",
-    Callback = function(v)
-        AutoBringCompass = v
-    end,
-})
-
-BringSection:Toggle({
-    Title = "Auto Bring Old Book",
-    Callback = function(v)
-        AutoBringOldBook = v
-    end,
-})
-
--- ============ CONFIG FARM TAB ============
-local ConfigTab = Window:Tab({
-    Title = "Config Farm",
-    Icon = "solar:cpu-bold",
-})
-
-local SkillSection = ConfigTab:Section({
-    Title = "Auto Skill",
-})
-
-SkillSection:Toggle({
-    Title = "Auto Skill",
-    Callback = function(v)
-        AutoSkillEnabled = v
-    end,
-})
-
-for _, skill in ipairs(AvailableSkills) do
-    SkillSection:Toggle({
-        Title = "Skill " .. skill,
-        Callback = function(v)
-            SelectedSkills[skill] = v
-            local count = 0
-            for _, s in pairs(SelectedSkills) do if s then count = count + 1 end end
-            WindUI:Notify({ Title = "Skills", Content = "Selected " .. count .. " skills", Duration = 1 })
-        end,
-    })
-end
-
-local HakiSection = ConfigTab:Section({
-    Title = "Auto Haki",
-})
-
-HakiSection:Toggle({
-    Title = "Auto Haki",
-    Callback = function(v)
-        AutoHakiEnabled = v
-    end,
-})
-
--- ============ TELEPORT TAB ============
-local TeleportTab = Window:Tab({
-    Title = "Teleport",
-    Icon = "solar:planet-bold",
-})
-
-local TeleportSection = TeleportTab:Section({
-    Title = "Teleport",
-})
-
--- Islands Dropdown
-local IslandNames = {}
-local IslandPositions = {}
-
-local islandData = {
-    ["Sam"] = Vector3.new(-1282.53, 218.00, -1347.59),
-    ["Fisher"] = Vector3.new(-1689.73, 216.00, -320.37),
-    ["SectorG9"] = Vector3.new(-2681.07, 216.00, -943.29),
-    ["MarineFord"] = Vector3.new(-3310.71, 300.75, -3286.47),
-    ["Purple Island"] = Vector3.new(-5273.88, 519.50, -7845.15),
-    ["Water tower"] = Vector3.new(-233.99, 226.00, -1026.76),
-    ["WindMills"] = Vector3.new(65.12, 224.00, -35.69),
-    ["OneHouse"] = Vector3.new(720.87, 241.00, 1214.81),
-    ["restaurant"] = Vector3.new(1954.35, 218.00, 610.74),
-    ["KingCrab"] = Vector3.new(1215.75, 243.00, -268.88),
-    ["CaveIsland"] = Vector3.new(2052.59, 491.00, -656.71),
-    ["BigTree"] = Vector3.new(2051.62, 288.00, -1871.25),
-    ["Krizma Island"] = Vector3.new(-1072.04, 361.00, 1677.36),
-    ["Gun Island"] = Vector3.new(-1846.41, 222.00, 3402.44),
-    ["Accient Island"] = Vector3.new(-2721.82, 252.69, 1153.06),
-    ["C Island"] = Vector3.new(2953.90, 217.00, 1394.13),
-    ["Bar Island"] = Vector3.new(1481.25, 263.90, 2117.69),
-    ["Anna House"] = Vector3.new(1118.05, 217.20, 3353.08),
-    ["Crocodile Land"] = Vector3.new(948.70, 392.59, 5014.60),
-    ["Three Tree"] = Vector3.new(-5703.31, 216.00, 123.44),
-    ["Hole Land"] = Vector3.new(-10913.88, 551.00, 5063.75),
-    ["Many Land"] = Vector3.new(-9258.29, 216.00, -3025.81),
-    ["Haki Land"] = Vector3.new(-1002.16, 4010.97, 10158.25),
-    ["Vokun Land"] = Vector3.new(4685.26, 217.00, 4817.13),
-    ["BigSnow"] = Vector3.new(6275.28, 487.00, -1829.30),
-}
-
-for name, pos in pairs(islandData) do
-    table.insert(IslandNames, name)
-    IslandPositions[name] = pos
-end
-table.sort(IslandNames)
-
-TeleportSection:Dropdown({
-    Title = "Select Island",
-    Values = IslandNames,
-    Value = IslandNames[1],
-    Callback = function(v)
-        if IslandPositions[v] then
-            local char = getCharacter()
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                pcall(function()
-                    hrp.CFrame = CFrame.new(IslandPositions[v]) + Vector3.new(0, 3, 0)
-                end)
-                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
-            end
-        end
-    end,
-})
-
-TeleportSection:Button({
-    Title = "Teleport to Rayleigh",
-    Icon = "",
-    Callback = function()
-        teleportToRayleigh()
-        WindUI:Notify({ Title = "Teleport", Content = "Teleported to Rayleigh", Duration = 2 })
-    end,
-})
-
--- ============ PLAYER TAB ============
-local PlayerTab = Window:Tab({
-    Title = "Player",
-    Icon = "lucide:users",
-})
-
-local PlayerSection = PlayerTab:Section({
-    Title = "Player Control",
-})
-
--- Player Dropdown
-local PlayerDropdown = PlayerSection:Dropdown({
-    Title = "Select Player",
-    Values = GetPlayerList(),
-    Value = GetPlayerList()[1] or "None",
-    Callback = function(v)
-        SelectedPlayerName = v
-    end,
-})
-
-PlayerSection:Button({
-    Title = "Refresh List",
-    Icon = "",
-    Callback = function()
-        local newList = GetPlayerList()
-        PlayerDropdown:Refresh(newList)
-        WindUI:Notify({ Title = "Refresh", Content = "Player list updated", Duration = 2 })
-    end,
-})
-
-PlayerSection:Toggle({
-    Title = "Spectate Player",
-    Callback = function(v)
-        if v then
-            if SelectedPlayerName then
-                StartSpectate(SelectedPlayerName)
-            else
-                WindUI:Notify({ Title = "Spectate", Content = "Select a player first!", Duration = 2 })
-                return false
-            end
-        else
-            StopSpectate()
-        end
-    end,
-})
-
-PlayerSection:Button({
-    Title = "Teleport to Player",
-    Icon = "",
-    Callback = function()
-        if SelectedPlayerName then
-            TeleportToPlayer(SelectedPlayerName)
-        else
-            WindUI:Notify({ Title = "Teleport", Content = "Select a player first!", Duration = 2 })
-        end
-    end,
-})
-
-PlayerSection:Toggle({
-    Title = "Kill Player",
-    Callback = function(v)
-        if v then
-            if SelectedPlayerName then
-                StartKill(SelectedPlayerName)
-            else
-                WindUI:Notify({ Title = "Kill", Content = "Select a player first!", Duration = 2 })
-                return false
-            end
-        else
-            StopKill()
-        end
-    end,
-})
-
--- Utility
-local UtilitySection = PlayerTab:Section({
-    Title = "Utility",
-})
-
-UtilitySection:Toggle({
-    Title = "Fly",
-    Callback = function()
-        toggleFly()
-        WindUI:Notify({ Title = "Fly", Content = tostring(FlyEnabled), Duration = 2 })
-    end,
-})
-
-UtilitySection:Slider({
-    Title = "Fly Speed",
-    Step = 1,
-    Value = {
-        Min = 50,
-        Max = 1000,
-        Default = 200,
-    },
-    Callback = function(v)
-        FlySpeed = v
-    end,
-})
-
-UtilitySection:Toggle({
-    Title = "Noclip",
-    Callback = function()
-        toggleNoclip()
-        WindUI:Notify({ Title = "Noclip", Content = tostring(NoclipEnabled), Duration = 2 })
-    end,
-})
-
-UtilitySection:Toggle({
-    Title = "ESP (Players)",
-    Callback = function()
-        toggleESP()
-        WindUI:Notify({ Title = "ESP", Content = tostring(ESPEnabled), Duration = 2 })
-    end,
-})
-
--- ============ QUEST TAB ============
-local QuestTab = Window:Tab({
-    Title = "Quest",
-    Icon = "solar:crown-bold",
-})
-
-local QuestSection = QuestTab:Section({
-    Title = "Haki Quest",
-})
-
-QuestSection:Toggle({
-    Title = "Auto Collect Rings",
-    Callback = function(v)
-        HakiQuestEnabled = v
-        if not v then 
-            CollectedRings = {}
-            currentRingIndex = 1
-            RingTweenActive = false
-        end
-    end,
-})
-
-QuestSection:Button({
-    Title = "Teleport to Rayleigh",
-    Icon = "",
-    Callback = function()
-        teleportToRayleigh()
-    end,
-})
-
-QuestSection:Button({
-    Title = "Reset Progress",
-    Icon = "",
-    Callback = function()
-        CollectedRings = {}
-        currentRingIndex = 1
-        RingTweenActive = false
-        WindUI:Notify({ Title = "Reset", Content = "Progress reset", Duration = 2 })
-    end,
-})
-
--- Fishing
-local FishingSection = QuestTab:Section({
-    Title = "Auto Fishing",
-})
-
+-- Auto Fishing
 local AutoFishingEnabled = false
 local AutoMinigameEnabled = false
 local FishingState = "IDLE"
@@ -1473,7 +1050,7 @@ local function ClickSelectedButton()
 end
 
 local function SetupMinigameListener()
-    local minigameGui = Player.PlayerGui:FindFirstChild("FishingMinigame")
+    local minigameGui = PlayerGui:FindFirstChild("FishingMinigame")
     if not minigameGui or not minigameGui.Enabled then return false end
     if MinigameActive then return true end
     MinigameActive = true
@@ -1568,7 +1145,7 @@ task.spawn(function()
                 end
             end
             if FishingState == "MINIGAME" then
-                local mg = Player.PlayerGui:FindFirstChild("FishingMinigame")
+                local mg = PlayerGui:FindFirstChild("FishingMinigame")
                 if not mg or not mg.Enabled then
                     FishingState = "IDLE"
                 end
@@ -1585,52 +1162,749 @@ task.spawn(function()
     end
 end)
 
+-- Admin detection
+local AdminUserIds = { [1425918021] = true, [3160094389] = true }
+local function CheckForAdmins()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if AdminUserIds[player.UserId] then
+            WindUI:Notify({ Title = "Admin Detected", Content = player.Name .. " joined! Leaving...", Duration = 3 })
+            task.wait(1)
+            pcall(function()
+                game:GetService("TeleportService"):Teleport(game.PlaceId)
+            end)
+            return true
+        end
+    end
+    return false
+end
+
+-- Hide nametag
+local function HideNametag()
+    pcall(function()
+        for _, obj in ipairs(Player.PlayerGui:GetDescendants()) do
+            if obj.Name == "Nametag" and obj:IsA("TextLabel") then
+                obj.Text = "SonHub Hidden"
+                obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        end
+    end)
+end
+
+-- Create WindUI Window
+local Window = WindUI:CreateWindow({
+    Title = "SON HUB V3.5",
+    Author = "by SonDepTrai",
+    Icon = "solar:star-bold",
+    Folder = "SON_HUB",
+    Theme = "Dark",
+    NewElements = true,
+    OpenButton = {
+        Title = "Open SON HUB",
+        CornerRadius = UDim.new(1, 0),
+        StrokeThickness = 3,
+        Enabled = true,
+        Draggable = true,
+        OnlyMobile = false,
+        Color = ColorSequence.new(
+            Color3.fromHex("#FF6B35"),
+            Color3.fromHex("#FFD700")
+        ),
+    },
+})
+
+-- Tags
+Window:Tag({
+    Title = "v3.5",
+    Color = Color3.fromHex("#FF6B35"),
+})
+
+Window:Tag({
+    Title = "SonDepTrai",
+    Color = Color3.fromHex("#FFD700"),
+})
+
+-- Helper to get available weapons
+local function getAvailableWeapons()
+    local weapons = {"None"}
+    local backpack = Player:FindFirstChild("Backpack")
+    if backpack then
+        for _, v in pairs(backpack:GetChildren()) do
+            if v:IsA("Tool") then
+                table.insert(weapons, v.Name)
+            end
+        end
+    end
+    return weapons
+end
+
+-- Variables for UI elements
+local weaponDropdown = nil
+local killToggleObj = nil
+local spectateToggleObj = nil
+local mainPlayerDropdown = nil
+local flyToggleObj = nil
+local noclipToggleObj = nil
+local espToggleObj = nil
+
+-- Define tabs
+local FarmTab = Window:Tab({ Title = "Farm", Icon = "solar:leaf-bold" })
+local ConfigFarmTab = Window:Tab({ Title = "Config Farm", Icon = "solar:cpu-bold" })
+local TeleportTab = Window:Tab({ Title = "Teleport", Icon = "solar:planet-bold" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "lucide:users" })
+local QuestTab = Window:Tab({ Title = "Quest", Icon = "solar:crown-bold" })
+local MiscTab = Window:Tab({ Title = "Misc", Icon = "solar:settings-bold" })
+
+-- Farm Tab
+local FarmSection = FarmTab:Section({ Title = "Auto Farm", Opened = true })
+
+FarmSection:Button({
+    Title = "Refresh Weapons",
+    Icon = "refresh-ccw",
+    Callback = function()
+        local weapons = getAvailableWeapons()
+        WindUI:Notify({ Title = "Refreshed", Content = #weapons .. " weapons found", Duration = 2 })
+        if weaponDropdown then
+            weaponDropdown:Refresh(weapons)
+        end
+    end
+})
+
+FarmSection:Toggle({
+    Title = "Auto Farm ON/OFF",
+    Flag = "AutoFarm",
+    Value = false,
+    Callback = function(v)
+        FarmEnabled = v
+        if not v and CurrentTarget then
+            unfreezeNPC(CurrentTarget)
+            CurrentTarget = nil
+        end
+    end
+})
+
+weaponDropdown = FarmSection:Dropdown({
+    Title = "Select Weapon",
+    Values = getAvailableWeapons(),
+    Value = "None",
+    Callback = function(v)
+        if v == "None" then
+            SelectedWeapon = nil
+            ForceEquip = false
+        else
+            SelectedWeapon = v
+            ForceEquip = true
+            equipWeapon(v)
+        end
+    end
+})
+
+FarmSection:Dropdown({
+    Title = "Farm Mode",
+    Values = {"Easy", "Medium", "Hardcore"},
+    Value = "Easy",
+    Callback = function(v)
+        FarmMode = v
+        if CurrentTarget then
+            unfreezeNPC(CurrentTarget)
+            CurrentTarget = nil
+        end
+        WindUI:Notify({ Title = "Farm Mode", Content = "Switched to " .. v, Duration = 2 })
+    end
+})
+
+FarmSection:Toggle({
+    Title = "Auto Chest",
+    Flag = "AutoChest",
+    Value = false,
+    Callback = function(v)
+        ChestEnabled = v
+    end
+})
+
+FarmSection:Divider()
+
+local BringSection = FarmTab:Section({ Title = "Auto Bring", Opened = true })
+
+BringSection:Toggle({
+    Title = "Auto Bring Normal Fruit",
+    Flag = "AutoBringNormalFruit",
+    Value = false,
+    Callback = function(v)
+        AutoBringNormalFruit = v
+    end
+})
+
+BringSection:Toggle({
+    Title = "Auto Bring Demon Fruit",
+    Flag = "AutoBringDemonFruit",
+    Value = false,
+    Callback = function(v)
+        AutoBringDemonFruit = v
+    end
+})
+
+BringSection:Toggle({
+    Title = "Auto Bring Compass",
+    Flag = "AutoBringCompass",
+    Value = false,
+    Callback = function(v)
+        AutoBringCompass = v
+    end
+})
+
+BringSection:Toggle({
+    Title = "Auto Bring Old Book",
+    Flag = "AutoBringOldBook",
+    Value = false,
+    Callback = function(v)
+        AutoBringOldBook = v
+    end
+})
+
+-- Config Farm Tab
+local ConfigSection = ConfigFarmTab:Section({ Title = "Auto Skill", Opened = true })
+
+ConfigSection:Toggle({
+    Title = "Auto Skill ON/OFF",
+    Flag = "AutoSkill",
+    Value = false,
+    Callback = function(v)
+        AutoSkillEnabled = v
+    end
+})
+
+for _, skill in ipairs(AvailableSkills) do
+    ConfigSection:Toggle({
+        Title = "Skill " .. skill,
+        Flag = "Skill_" .. skill,
+        Value = false,
+        Callback = function(v)
+            SelectedSkills[skill] = v
+            local count = 0
+            for _, s in pairs(SelectedSkills) do
+                if s then count = count + 1 end
+            end
+            WindUI:Notify({ Title = "Skills", Content = "Selected " .. count .. " skills", Duration = 1 })
+        end
+    })
+end
+
+ConfigFarmTab:Divider()
+
+local HakiSection = ConfigFarmTab:Section({ Title = "Auto Haki", Opened = true })
+
+HakiSection:Toggle({
+    Title = "Auto Haki ON/OFF",
+    Flag = "AutoHaki",
+    Value = false,
+    Callback = function(v)
+        AutoHakiEnabled = v
+    end
+})
+
+-- Teleport Tab
+local TeleportSection = TeleportTab:Section({ Title = "Teleport", Opened = true })
+
+local Islands = {
+    ["Sam"] = Vector3.new(-1282.53, 218.00, -1347.59),
+    ["Fisher"] = Vector3.new(-1689.73, 216.00, -320.37),
+    ["SectorG9"] = Vector3.new(-2681.07, 216.00, -943.29),
+    ["MarineFord"] = Vector3.new(-3310.71, 300.75, -3286.47),
+    ["Purple Island"] = Vector3.new(-5273.88, 519.50, -7845.15),
+    ["Water tower"] = Vector3.new(-233.99, 226.00, -1026.76),
+    ["WindMills"] = Vector3.new(65.12, 224.00, -35.69),
+    ["OneHouse"] = Vector3.new(720.87, 241.00, 1214.81),
+    ["restaurant"] = Vector3.new(1954.35, 218.00, 610.74),
+    ["KingCrab"] = Vector3.new(1215.75, 243.00, -268.88),
+    ["CaveIsland"] = Vector3.new(2052.59, 491.00, -656.71),
+    ["BigTree"] = Vector3.new(2051.62, 288.00, -1871.25),
+    ["Krizma Island"] = Vector3.new(-1072.04, 361.00, 1677.36),
+    ["Gun Island"] = Vector3.new(-1846.41, 222.00, 3402.44),
+    ["Accient Island"] = Vector3.new(-2721.82, 252.69, 1153.06),
+    ["C Island"] = Vector3.new(2953.90, 217.00, 1394.13),
+    ["Bar Island"] = Vector3.new(1481.25, 263.90, 2117.69),
+    ["Anna House"] = Vector3.new(1118.05, 217.20, 3353.08),
+    ["Crocodile Land"] = Vector3.new(948.70, 392.59, 5014.60),
+    ["Three Tree"] = Vector3.new(-5703.31, 216.00, 123.44),
+    ["Hole Land"] = Vector3.new(-10913.88, 551.00, 5063.75),
+    ["Many Land"] = Vector3.new(-9258.29, 216.00, -3025.81),
+    ["Haki Land"] = Vector3.new(-1002.16, 4010.97, 10158.25),
+    ["Vokun Land"] = Vector3.new(4685.26, 217.00, 4817.13),
+    ["BigSnow"] = Vector3.new(6275.28, 487.00, -1829.30),
+}
+
+local IslandNamesList = {"None"}
+for name in pairs(Islands) do
+    table.insert(IslandNamesList, name)
+end
+table.sort(IslandNamesList)
+
+TeleportSection:Dropdown({
+    Title = "Select Island",
+    Values = IslandNamesList,
+    Value = "None",
+    Callback = function(v)
+        if v ~= "None" and Islands[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(Islands[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end
+})
+
+TeleportSection:Divider()
+
+local ShopNPCs = {
+    ["Sniper Shop"] = Vector3.new(-1843.3797607421875, 221.99998474121094, 3409.400634765625),
+    ["Sword Shop"] = Vector3.new(1005.53515625, 223.99998474121094, -3337.915283203125),
+    ["Strange Dealer"] = Vector3.new(1240.8421630859375, 224.20001220703125, -3240.296875),
+}
+
+local ShopNames = {"None"}
+for name in pairs(ShopNPCs) do
+    table.insert(ShopNames, name)
+end
+table.sort(ShopNames)
+
+TeleportSection:Dropdown({
+    Title = "Shop Teleport",
+    Values = ShopNames,
+    Value = "None",
+    Callback = function(v)
+        if v ~= "None" and ShopNPCs[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(ShopNPCs[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end
+})
+
+TeleportSection:Divider()
+
+local QuestNPCs = {
+    ["Daily Quest"] = Vector3.new(-2606.061279296875, 253.69842529296875, 1087.8436279296875),
+    ["Sam Quest"] = Vector3.new(-1303.5345458984375, 217.99998474121094, -1352.5908203125),
+    ["Krizma Sword"] = Vector3.new(-1074.173828125, 360.999694824219, 1666.887084969375),
+    ["Mode Position"] = Vector3.new(2053.41552734375, 497.69830322265625, -614.63305640625),
+}
+
+local QuestNames = {"None"}
+for name in pairs(QuestNPCs) do
+    table.insert(QuestNames, name)
+end
+table.sort(QuestNames)
+
+TeleportSection:Dropdown({
+    Title = "Quest NPC Teleport",
+    Values = QuestNames,
+    Value = "None",
+    Callback = function(v)
+        if v ~= "None" and QuestNPCs[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(QuestNPCs[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end
+})
+
+TeleportSection:Divider()
+
+local MiscNPCs = {
+    ["Stats Fruit Roll"] = Vector3.new(801.1287231445312, 230.37062072753906, 5354.083984375),
+    ["Roll Stats Fruit"] = Vector3.new(801.3805541992188, 230.37062072753906, 5353.8662109375),
+}
+
+local MiscNames = {"None"}
+for name in pairs(MiscNPCs) do
+    table.insert(MiscNames, name)
+end
+table.sort(MiscNames)
+
+TeleportSection:Dropdown({
+    Title = "Misc NPC Teleport",
+    Values = MiscNames,
+    Value = "None",
+    Callback = function(v)
+        if v ~= "None" and MiscNPCs[v] then
+            local char = getCharacter()
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = CFrame.new(MiscNPCs[v]) + Vector3.new(0, 3, 0)
+                end)
+                WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. v, Duration = 2 })
+            end
+        end
+    end
+})
+
+TeleportSection:Button({
+    Title = "Teleport to Rayleigh",
+    Callback = function()
+        teleportToRayleigh()
+    end
+})
+
+-- Player Tab
+local PlayersSection = PlayerTab:Section({ Title = "Player Control", Opened = true })
+
+mainPlayerDropdown = PlayersSection:Dropdown({
+    Title = "Select Player",
+    Values = GetPlayerList(),
+    Value = "None",
+    Callback = function(v)
+        SelectedPlayerName = v
+        if v ~= "None" then
+            CurrentKillTarget = Players:FindFirstChild(v)
+        end
+    end
+})
+
+PlayersSection:Button({
+    Title = "Refresh List",
+    Icon = "refresh-ccw",
+    Callback = function()
+        local newList = GetPlayerList()
+        if mainPlayerDropdown then
+            mainPlayerDropdown:Refresh(newList)
+            if not table.find(newList, SelectedPlayerName) then
+                SelectedPlayerName = "None"
+                mainPlayerDropdown:Select("None")
+            end
+        end
+        WindUI:Notify({ Title = "Refresh", Content = "Player list updated", Duration = 2 })
+    end
+})
+
+PlayersSection:Divider()
+
+spectateToggleObj = PlayersSection:Toggle({
+    Title = "Spectate Player",
+    Flag = "SpectateToggle",
+    Value = false,
+    Callback = function(v)
+        if v then
+            if SelectedPlayerName ~= "None" then
+                if not StartSpectate(SelectedPlayerName) then
+                    if spectateToggleObj then spectateToggleObj:SetValue(false) end
+                end
+            else
+                WindUI:Notify({ Title = "Spectate", Content = "Select a player first!", Duration = 2 })
+                if spectateToggleObj then spectateToggleObj:SetValue(false) end
+            end
+        else
+            StopSpectate()
+        end
+    end
+})
+
+PlayersSection:Button({
+    Title = "Teleport to Player",
+    Icon = "send",
+    Callback = function()
+        if SelectedPlayerName ~= "None" then
+            TeleportToPlayer(SelectedPlayerName)
+        else
+            WindUI:Notify({ Title = "Teleport", Content = "Select a player first!", Duration = 2 })
+        end
+    end
+})
+
+killToggleObj = PlayersSection:Toggle({
+    Title = "Kill Player",
+    Flag = "KillToggle",
+    Value = false,
+    Callback = function(v)
+        if v then
+            if SelectedPlayerName ~= "None" then
+                StartKill(SelectedPlayerName)
+            else
+                WindUI:Notify({ Title = "Kill", Content = "Select a player first!", Duration = 2 })
+                if killToggleObj then killToggleObj:SetValue(false) end
+            end
+        else
+            StopKill()
+        end
+    end
+})
+
+PlayersSection:Divider()
+
+local UtilitySection = PlayerTab:Section({ Title = "Utility", Opened = true })
+
+flyToggleObj = UtilitySection:Toggle({
+    Title = "Fly",
+    Flag = "FlyToggle",
+    Value = false,
+    Callback = function(v)
+        if v ~= FlyEnabled then
+            toggleFly()
+        end
+    end
+})
+
+UtilitySection:Slider({
+    Title = "Fly Speed",
+    Flag = "FlySpeed",
+    Value = { Min = 50, Max = 1000, Default = 200 },
+    Step = 1,
+    Callback = function(v)
+        FlySpeed = v
+    end
+})
+
+UtilitySection:Divider()
+
+noclipToggleObj = UtilitySection:Toggle({
+    Title = "Noclip",
+    Flag = "NoclipToggle",
+    Value = false,
+    Callback = function(v)
+        if v ~= NoclipEnabled then
+            toggleNoclip()
+        end
+    end
+})
+
+UtilitySection:Divider()
+
+espToggleObj = UtilitySection:Toggle({
+    Title = "ESP (Players)",
+    Flag = "ESPToggle",
+    Value = false,
+    Callback = function(v)
+        if v ~= ESPEnabled then
+            toggleESP()
+        end
+    end
+})
+
+-- Quest Tab
+local QuestSection = QuestTab:Section({ Title = "Haki Quest", Opened = true })
+
+QuestSection:Toggle({
+    Title = "Auto Collect Rings",
+    Flag = "AutoHakiQuest",
+    Value = false,
+    Callback = function(v)
+        HakiQuestEnabled = v
+        if not v then
+            CollectedRings = {}
+            currentRingIndex = 1
+            RingTweenActive = false
+        end
+    end
+})
+
+QuestSection:Button({
+    Title = "Teleport to Rayleigh",
+    Callback = function()
+        teleportToRayleigh()
+    end
+})
+
+QuestSection:Button({
+    Title = "Reset Progress",
+    Callback = function()
+        CollectedRings = {}
+        currentRingIndex = 1
+        RingTweenActive = false
+        WindUI:Notify({ Title = "Reset", Content = "Progress reset", Duration = 2 })
+    end
+})
+
+QuestSection:Divider()
+
+local FishingSection = QuestTab:Section({ Title = "Auto Fishing", Opened = true })
+
 FishingSection:Toggle({
     Title = "Auto Fish",
+    Flag = "AutoFishing",
+    Value = false,
     Callback = function(v)
         AutoFishingEnabled = v
         if v then
             FishingState = "IDLE"
             EquipRod()
         end
-    end,
+    end
 })
 
 FishingSection:Toggle({
     Title = "Auto Minigame (Beta)",
+    Flag = "AutoMinigame",
+    Value = false,
     Callback = function(v)
         AutoMinigameEnabled = v
-    end,
+    end
 })
 
--- ============ MISC TAB ============
-local MiscTab = Window:Tab({
-    Title = "Misc",
-    Icon = "solar:settings-bold",
-})
-
-local MiscSection = MiscTab:Section({
-    Title = "Settings",
-})
+-- Misc Tab
+local MiscSection = MiscTab:Section({ Title = "Settings", Opened = true })
 
 MiscSection:Toggle({
     Title = "Anti AFK",
+    Flag = "AntiAFK",
     Value = true,
     Callback = function(v)
         AntiAFKEnabled = v
         setupAntiAFK()
-    end,
+    end
 })
 
--- ============ TOGGLE BUTTON ============
+MiscSection:Divider()
+
+local ThemeSection = MiscTab:Section({ Title = "Themes", Opened = true })
+
+local themes = {
+    "Dark", "Light", "Mellowsi", "Dracula", "Catppuccin",
+    "Tokyo Night", "Nord", "Gruvbox", "Solarized Dark"
+}
+
+for _, theme in ipairs(themes) do
+    ThemeSection:Button({
+        Title = theme,
+        Callback = function()
+            Window:SetTheme(theme)
+            WindUI:Notify({ Title = "Theme", Content = theme .. " applied", Duration = 2 })
+        end
+    })
+end
+
+MiscSection:Divider()
+
+local InfoSection = MiscTab:Section({ Title = "Info", Opened = true })
+
+InfoSection:Paragraph({
+    Title = "SON HUB V3.5",
+    Desc = "Created by SonDepTrai\nVersion 3.5\nDiscord: https://discord.gg/faZagWVm72",
+    Image = "info",
+    ImageSize = 20,
+})
+
+InfoSection:Button({
+    Title = "Copy Discord Link",
+    Icon = "copy",
+    Callback = function()
+        setclipboard("https://discord.gg/faZagWVm72")
+        WindUI:Notify({ Title = "Copied!", Content = "Discord link copied", Duration = 2 })
+    end
+})
+
+-- Events
+Players.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    local newList = GetPlayerList()
+    if mainPlayerDropdown then
+        mainPlayerDropdown:Refresh(newList)
+        if not table.find(newList, SelectedPlayerName) then
+            SelectedPlayerName = "None"
+            mainPlayerDropdown:Select("None")
+        end
+    end
+    if Spectating and CurrentSpectatePlayer then
+        local stillExists = Players:FindFirstChild(CurrentSpectatePlayer.Name)
+        if not stillExists then
+            StopSpectate()
+            if spectateToggleObj then spectateToggleObj:SetValue(false) end
+        end
+    end
+    if KillActive and CurrentKillTarget then
+        local stillExists = Players:FindFirstChild(CurrentKillTarget.Name)
+        if not stillExists then
+            KillActive = false
+            if killToggleObj then killToggleObj:SetValue(false) end
+            CurrentKillTarget = nil
+            if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
+        end
+    end
+end)
+
+Players.PlayerRemoving:Connect(function()
+    task.wait(0.5)
+    local newList = GetPlayerList()
+    if mainPlayerDropdown then
+        mainPlayerDropdown:Refresh(newList)
+        if not table.find(newList, SelectedPlayerName) then
+            SelectedPlayerName = "None"
+            mainPlayerDropdown:Select("None")
+        end
+    end
+    if Spectating and CurrentSpectatePlayer then
+        local stillExists = Players:FindFirstChild(CurrentSpectatePlayer.Name)
+        if not stillExists then
+            StopSpectate()
+            if spectateToggleObj then spectateToggleObj:SetValue(false) end
+        end
+    end
+    if KillActive and CurrentKillTarget then
+        local stillExists = Players:FindFirstChild(CurrentKillTarget.Name)
+        if not stillExists then
+            KillActive = false
+            if killToggleObj then killToggleObj:SetValue(false) end
+            CurrentKillTarget = nil
+            if KillLoopConnection then KillLoopConnection:Disconnect(); KillLoopConnection = nil end
+        end
+    end
+end)
+
+-- Hide nametag
+HideNametag()
+Player.PlayerGui.DescendantAdded:Connect(function(desc)
+    task.wait(0.1)
+    if desc.Name == "Nametag" and desc:IsA("TextLabel") then
+        pcall(function()
+            desc.Text = "SonHub Hidden"
+        end)
+    end
+end)
+
+-- Check admins
+CheckForAdmins()
+Players.PlayerAdded:Connect(function(player)
+    task.wait(0.5)
+    if AdminUserIds[player.UserId] then
+        WindUI:Notify({ Title = "Admin Joined", Content = player.Name .. " joined! Leaving...", Duration = 3 })
+        task.wait(1)
+        pcall(function()
+            game:GetService("TeleportService"):Teleport(game.PlaceId)
+        end)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(30) do
+        CheckForAdmins()
+    end
+end)
+
+-- Create toggle button for mobile/desktop
+local toggleSize = isMobile and 50 or 65
+local togglePos = isMobile and 60 or 90
+
 local toggleGui = Instance.new("ScreenGui")
 toggleGui.Name = "SON_Toggle"
 toggleGui.Parent = Player:WaitForChild("PlayerGui")
 toggleGui.ResetOnSpawn = false
 
 local toggleBtn = Instance.new("ImageButton")
-toggleBtn.Size = UDim2.new(0, 55, 0, 55)
-toggleBtn.Position = UDim2.new(0, 15, 0, 90)
+toggleBtn.Size = UDim2.new(0, toggleSize, 0, toggleSize)
+toggleBtn.Position = UDim2.new(0, 15, 0, togglePos)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 toggleBtn.BackgroundTransparency = 0.3
 toggleBtn.Image = "rbxassetid://86946036155828"
@@ -1672,73 +1946,12 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if dragging and not moved then
             menuVisible = not menuVisible
-            if menuVisible then Window:Show() else Window:Hide() end
+            if menuVisible then Window:Open() else Window:Close() end
         end
         dragging = false
         moved = false
     end
 end)
 
--- ============ HIDE NAMETAG ============
-local function HideNametag()
-    pcall(function()
-        for _, obj in ipairs(Player.PlayerGui:GetDescendants()) do
-            if obj.Name == "Nametag" and obj:IsA("TextLabel") then
-                obj.Text = "SonHub Hidden"
-                obj.TextColor3 = Color3.fromRGB(255, 255, 255)
-            end
-        end
-    end)
-end
-HideNametag()
-Player.PlayerGui.DescendantAdded:Connect(function(desc)
-    task.wait(0.1)
-    if desc.Name == "Nametag" and desc:IsA("TextLabel") then
-        pcall(function()
-            desc.Text = "SonHub Hidden"
-        end)
-    end
-end)
-
--- ============ ADMIN CHECK ============
-local AdminUserIds = { [1425918021] = true, [3160094389] = true }
-local function CheckForAdmins()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if AdminUserIds[player.UserId] then
-            WindUI:Notify({ Title = "Admin Detected", Content = player.Name .. " joined! Leaving...", Duration = 3 })
-            task.wait(1)
-            pcall(function()
-                game:GetService("TeleportService"):Teleport(game.PlaceId)
-            end)
-            return true
-        end
-    end
-    return false
-end
-CheckForAdmins()
-Players.PlayerAdded:Connect(function(player)
-    task.wait(0.5)
-    if AdminUserIds[player.UserId] then
-        WindUI:Notify({ Title = "Admin Joined", Content = player.Name .. " joined! Leaving...", Duration = 3 })
-        task.wait(1)
-        pcall(function()
-            game:GetService("TeleportService"):Teleport(game.PlaceId)
-        end)
-    end
-end)
-task.spawn(function()
-    while task.wait(30) do
-        CheckForAdmins()
-    end
-end)
-
--- ============ KEYBIND ============
-UserInputService.InputBegan:Connect(function(Input)
-    if Input.KeyCode == Enum.KeyCode.RightControl then
-        Window:Toggle()
-    end
-end)
-
+-- Notify
 WindUI:Notify({ Title = "SON HUB V3.5", Content = "Loaded Successfully!", Duration = 3 })
-task.wait(0.1)
-Window:Show()
